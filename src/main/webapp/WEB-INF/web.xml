@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
+             http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
+         version="3.1">
+
+    <display-name>SEL_EMGR_PORTSTATE_WAS</display-name>
+
+    <!--
+        WAS Traditional / WLP 공통 배포용 web.xml
+        Spring Boot의 SpringBootServletInitializer가 DispatcherServlet을 자동 등록하므로
+        별도 서블릿 선언 불필요. WAS가 web.xml을 요구하는 경우를 위해 최소 선언만 유지.
+    -->
+
+</web-app>

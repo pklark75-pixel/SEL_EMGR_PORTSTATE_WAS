@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    WebSphere Liberty Profile (WLP) server.xml 예시
+    위치: ${wlp.install.dir}/usr/servers/<serverName>/server.xml
+
+    필요 피처:
+      - servlet-4.0  : Servlet 4.0 (Java EE 8) / servlet-3.1 도 가능
+      - jsp-2.3      : Thymeleaf가 내부적으로 JSP 클래스를 참조하는 경우 필요
+      - localConnector-1.0 : 로컬 개발 편의용 (선택)
+-->
+<server description="PFS Portfolio Statement WAS Server">
+
+    <featureManager>
+        <feature>servlet-4.0</feature>
+        <feature>jsp-2.3</feature>
+        <feature>localConnector-1.0</feature>
+    </featureManager>
+
+    <httpEndpoint id="defaultHttpEndpoint"
+                  host="*"
+                  httpPort="9080"
+                  httpsPort="9443"/>
+
+    <!-- WAR 배포: portstate-was-1.0.0-SNAPSHOT.war를 아래 경로에 복사 -->
+    <webApplication id="portstate-was"
+                    location="${server.config.dir}/apps/portstate-was-1.0.0-SNAPSHOT.war"
+                    contextRoot="/pfs"/>
+
+    <!--
+        PostgreSQL JDBC 드라이버를 WLP 공유 라이브러리로 설정하려면:
+
+        <library id="postgresLib">
+            <fileset dir="${server.config.dir}/lib" includes="postgresql-42.7.3.jar"/>
+        </library>
+        <dataSource jndiName="jdbc/pfsdb">
+            <jdbcDriver libraryRef="postgresLib"/>
+            <properties.postgresql serverName="localhost" portNumber="5432"
+                                   databaseName="pfsdb"
+                                   user="postgres" password="postgres123"/>
+        </dataSource>
+
+        단, 현재 코드는 DriverManager 직접 사용 방식이므로
+        PostgreSQL JAR는 WAR 내부(WEB-INF/lib)에 포함됩니다.
+    -->
+
+</server>

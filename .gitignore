@@ -1,0 +1,40 @@
+# IDE
+.idea/
+*.iml
+.settings/
+
+# Build outputs
+bin/
+out/
+target/
+
+# Local runtime/generated folders
+files/batch/
+files/recv/
+files/info/
+
+# 비밀번호 포함 설정 파일
+files/pfs-jdk.properties
+
+# 생성된 HTML 파일
+files/html/
+
+# 샘플 파일 (로컬 전용)
+files/sample/
+
+# Claude Code 작업 디렉토리
+.claude/
+
+# Local secrets/backups
+*.key
+*.pem
+*.p12
+*.bak
+
+# OS/temp
+Thumbs.db
+.DS_Store
+*.log
+*.tmp
+
+
