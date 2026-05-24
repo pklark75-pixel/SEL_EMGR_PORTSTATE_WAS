@@ -8,11 +8,12 @@ HSBC Korea 펀드 잔고 안내 이메일 자동화 시스템 — **WAS / WLP WA
 | 항목 | SEL_EMGR_PORTSTATE (원본) | SEL_EMGR_PORTSTATE_WAS (이 프로젝트) |
 |---|---|---|
 | 패키징 | JAR (내장 Tomcat) | **WAR** (외부 컨테이너) |
-| 실행 방식 | `mvn spring-boot:run` | WAS/WLP에 WAR 배포 |
+| 실행 방식 | `mvn spring-boot:run` | WAS/WLP에 WAR 배포 또는 `mvn liberty:run` (로컬) |
 | Tomcat 의존성 | 포함 (embedded) | **provided** (컨테이너 제공) |
 | `PfsWebApplication` | `main()` 전용 | `SpringBootServletInitializer` 확장 |
 | `web.xml` | 없음 | 추가 (WAS Traditional 호환) |
-| `server.xml` | 없음 | WLP 예시 포함 |
+| `server.xml` | 없음 | WLP 배포 설정 (liberty-maven-plugin 연동) |
+| 로컬 WLP 기동 | 없음 | `mvn liberty:run` (Open Liberty 자동 다운로드) |
 
 ## 기술 스택
 
@@ -103,9 +104,28 @@ mail.title=Portfolio Statement Upload Notification
 
 ## WLP (WebSphere Liberty Profile) 배포
 
-### 1. 피처 확인
+### 방법 A — 로컬 개발 테스트 (liberty-maven-plugin)
 
-`src/main/liberty/config/server.xml` 참고. 최소 필요 피처:
+`pom.xml`에 포함된 `liberty-maven-plugin`이 Open Liberty를 자동으로 다운로드하고 기동합니다.  
+별도 WLP 설치 없이 바로 사용 가능합니다.
+
+```powershell
+# 1. files/pfs-jdk.properties 생성 (DB 설정 포함)
+#    - pfs.baseDir는 자동으로 <프로젝트>/files 로 설정됨
+
+# 2. Liberty 기동 (WAR 자동 빌드·배포 포함)
+mvn liberty:run
+
+# 접속: http://localhost:9080/pfs
+
+# 3. 종료: Ctrl+C 또는
+mvn liberty:stop
+```
+
+**JVM 옵션 자동 전달:** `-Dpfs.baseDir=<프로젝트>/files`  
+Liberty가 기동되면 해당 경로의 `pfs-jdk.properties`를 읽어 설정을 적용합니다.
+
+**최소 필요 피처** (`src/main/liberty/config/server.xml`):
 
 ```xml
 <featureManager>
@@ -114,32 +134,61 @@ mail.title=Portfolio Statement Upload Notification
 </featureManager>
 ```
 
-> `servlet-3.1` 사용 시 `jsp-2.3` 으로 맞춰 설정하세요.
+**클래스로더 설정** (WLP는 `server.xml`로 자동 적용):
 
-### 2. WAR 배포
+```xml
+<webApplication id="portstate-was"
+                location="portstate-was-1.0.0-SNAPSHOT.war"
+                contextRoot="/pfs">
+    <classloader delegation="parentLast"/>
+</webApplication>
+```
+
+> `parentLast` 없으면 WAS/WLP 내장 `slf4j`, `spring-core`와 충돌해  
+> `ClassCastException` 또는 `NoSuchMethodError`가 발생합니다.
+
+---
+
+### 방법 B — 운영 WLP 서버 배포 (수동)
+
+#### 1. WAR 빌드
+
+```powershell
+mvn clean package -DskipTests
+# 산출물: target/portstate-was-1.0.0-SNAPSHOT.war
+```
+
+#### 2. WAR 배포
 
 ```bash
 # WAR 파일을 WLP apps 디렉토리에 복사
 cp target/portstate-was-1.0.0-SNAPSHOT.war \
    ${wlp.install.dir}/usr/servers/<serverName>/apps/
-
-# server.xml에 webApplication 등록
-# contextRoot="/pfs" 로 설정 (server.xml 예시 참고)
 ```
 
-### 3. 서버 시작 및 접속
-
-```bash
-${wlp.install.dir}/bin/server start <serverName>
-# 접속: http://<host>:9080/pfs
-```
-
-### 4. server.xml 예시
+#### 3. server.xml 설정
 
 ```xml
 <webApplication id="portstate-was"
                 location="${server.config.dir}/apps/portstate-was-1.0.0-SNAPSHOT.war"
-                contextRoot="/pfs"/>
+                contextRoot="/pfs">
+    <classloader delegation="parentLast"/>
+</webApplication>
+```
+
+#### 4. JVM 옵션 설정
+
+`${wlp.install.dir}/usr/servers/<serverName>/jvm.options`:
+
+```
+-Dpfs.baseDir=/opt/pfs/files
+```
+
+#### 5. 서버 시작 및 접속
+
+```bash
+${wlp.install.dir}/bin/server start <serverName>
+# 접속: http://<host>:9080/pfs
 ```
 
 ## WAS Traditional (8.5.x / 9.x) 배포
@@ -161,23 +210,23 @@ $AdminConfig save
 $AdminApp start portstate-was
 ```
 
-### 3. 클래스로더 설정 — `ibm-web-ext.xml` (자동)
+### 3. 클래스로더 설정
 
-클래스로더 설정은 WAR 내부의 `WEB-INF/ibm-web-ext.xml`에 선언되어 있어  
-**관리 콘솔 수동 조작 없이 배포 즉시 자동 적용**됩니다.
+WAS Traditional의 `ibm-web-ext.xml` 스키마는 `<classloader>` 요소를 지원하지 않습니다.  
+클래스로더 위임 전략은 **관리 콘솔에서 수동 설정**해야 합니다.
 
-```xml
-<!-- src/main/webapp/WEB-INF/ibm-web-ext.xml -->
-<classloader delegation="parentLast"/>
-```
+**관리 콘솔 경로:**  
+Applications → 해당 앱 선택 → Class loading and update detection  
+→ Class loader order: **Classes loaded with local class loader first (parent last)**
+
+`ibm-web-ext.xml`은 클래스로더 외 웹 모듈 설정만 담당합니다:
 
 | 설정 | 값 | 효과 |
 |---|---|---|
-| `delegation` | `parentLast` | WAR 내 라이브러리를 WAS 내장 라이브러리보다 우선 로드 |
 | `enable-reloading` | `false` | 클래스 변경 감지 비활성화 (성능) |
 | `enable-file-serving` | `false` | Spring MVC가 정적 리소스 처리 |
+| `enable-directory-browsing` | `false` | 디렉토리 목록 노출 방지 |
 
-> **WAS Traditional 8.5.5+ / WLP 공통 지원.**  
 > `parentLast` 설정이 없으면 WAS 내장 `slf4j`, `spring-core` 버전과 충돌해  
 > `ClassCastException` 또는 `NoSuchMethodError`가 발생할 수 있습니다.
 
