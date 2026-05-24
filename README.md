@@ -161,13 +161,25 @@ $AdminConfig save
 $AdminApp start portstate-was
 ```
 
-### 3. 클래스로더 설정 (WAS Traditional)
+### 3. 클래스로더 설정 — `ibm-web-ext.xml` (자동)
 
-WAS 관리 콘솔 → 애플리케이션 → **Class loading and update detection**:
-- Class loader order: **Classes loaded with local class loader first (parent last)**
-- WAR class loader policy: **Single class loader for application**
+클래스로더 설정은 WAR 내부의 `WEB-INF/ibm-web-ext.xml`에 선언되어 있어  
+**관리 콘솔 수동 조작 없이 배포 즉시 자동 적용**됩니다.
 
-> Spring Boot의 내부 클래스로더 구조와 WAS 클래스로더 충돌을 방지합니다.
+```xml
+<!-- src/main/webapp/WEB-INF/ibm-web-ext.xml -->
+<classloader delegation="parentLast"/>
+```
+
+| 설정 | 값 | 효과 |
+|---|---|---|
+| `delegation` | `parentLast` | WAR 내 라이브러리를 WAS 내장 라이브러리보다 우선 로드 |
+| `enable-reloading` | `false` | 클래스 변경 감지 비활성화 (성능) |
+| `enable-file-serving` | `false` | Spring MVC가 정적 리소스 처리 |
+
+> **WAS Traditional 8.5.5+ / WLP 공통 지원.**  
+> `parentLast` 설정이 없으면 WAS 내장 `slf4j`, `spring-core` 버전과 충돌해  
+> `ClassCastException` 또는 `NoSuchMethodError`가 발생할 수 있습니다.
 
 ## 주요 엔드포인트
 
