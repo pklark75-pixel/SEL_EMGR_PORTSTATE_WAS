@@ -69,6 +69,28 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+
+            <!--
+                Open Liberty (WLP) 로컬 테스트용
+                mvn liberty:run  → Liberty 자동 다운로드 후 서버 기동
+                mvn liberty:stop → 서버 중지
+            -->
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.10.3</version>
+                <configuration>
+                    <serverName>pfsServer</serverName>
+                    <configFile>${project.basedir}/src/main/liberty/config/server.xml</configFile>
+                    <!-- pfs-jdk.properties 위치를 JVM 옵션으로 전달 -->
+                    <jvmOptions>
+                        <param>-Dpfs.baseDir=${project.basedir}/files</param>
+                    </jvmOptions>
+                    <installAppPackages>project</installAppPackages>
+                    <appsDirectory>apps</appsDirectory>
+                    <looseApplication>false</looseApplication>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>

@@ -44,6 +44,11 @@ public class PfsProperties {
 
     public static PfsProperties loadDefault() {
         PfsProperties properties = new PfsProperties();
+        // WAS/WLP 배포 시 -Dpfs.baseDir=<path> JVM 옵션으로 기본 디렉토리 오버라이드 가능
+        String baseDirOverride = System.getProperty("pfs.baseDir");
+        if (baseDirOverride != null && !baseDirOverride.trim().isEmpty()) {
+            properties.baseDir = baseDirOverride.trim();
+        }
         Path filePath = properties.getBaseDirPath().resolve("pfs-jdk.properties");
         properties.loadFromFileIfExists(filePath);
         return properties;

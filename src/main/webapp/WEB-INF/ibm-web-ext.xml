@@ -7,22 +7,11 @@
     version="1.1">
 
     <!--
-        클래스로더 위임 전략: parentLast (로컬 우선)
-        - WAS Traditional 8.5.5+ / WLP 공통 적용
-        - Spring Boot 내부 라이브러리(spring-core, slf4j 등)가
-          WAS 내장 버전보다 우선 로드되어 ClassCastException / NoSuchMethodError 방지
+        클래스로더 위임(parentLast) 설정 위치:
+          - WLP     : server.xml > <webApplication> > <classloader delegation="parentLast"/>
+          - WAS Traditional : 관리 콘솔 > 애플리케이션 > 클래스 로더 > 위임 = parentLast
     -->
-    <classloader delegation="parentLast"/>
 
-    <!--
-        운영 환경 설정
-        - enable-reloading=false : JSP/클래스 변경 감지 비활성화 (성능)
-        - reload-interval=0     : 0 = 리로드 폴링 없음
-        - enable-directory-browsing=false : 디렉토리 목록 노출 방지
-        - enable-file-serving=false       : 정적 파일 직접 서빙 비활성화
-                                           (Spring MVC가 처리하므로 불필요)
-        - enable-serving-servlets-by-class-name=false : 보안
-    -->
     <enable-reloading value="false"/>
     <reload-interval value="0"/>
     <enable-directory-browsing value="false"/>
