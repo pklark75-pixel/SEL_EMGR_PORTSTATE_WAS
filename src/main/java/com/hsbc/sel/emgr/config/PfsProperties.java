@@ -92,13 +92,24 @@ public class PfsProperties {
         queueInfoTable = props.getProperty("db.queue.infoTable", queueInfoTable);
         uploadAuditTable = props.getProperty("db.audit.uploadTable", uploadAuditTable);
 
-        uploadZipMaxBytes = Integer.parseInt(props.getProperty("pfs.upload.zipMaxBytes", Integer.toString(uploadZipMaxBytes)));
-        queueRecentRows = Integer.parseInt(props.getProperty("pfs.queue.recentRows", Integer.toString(queueRecentRows)));
-        uploadHistoryRows = Integer.parseInt(props.getProperty("pfs.upload.historyRows", Integer.toString(uploadHistoryRows)));
+        uploadZipMaxBytes = parseInt(props, "pfs.upload.zipMaxBytes", uploadZipMaxBytes);
+        queueRecentRows   = parseInt(props, "pfs.queue.recentRows",   queueRecentRows);
+        uploadHistoryRows = parseInt(props, "pfs.upload.historyRows", uploadHistoryRows);
 
         appName = props.getProperty("mail.appName", appName);
         sender = props.getProperty("mail.sender", sender);
         title = props.getProperty("mail.title", title);
+    }
+
+    private static int parseInt(Properties props, String key, int defaultValue) {
+        String val = props.getProperty(key);
+        if (val == null || val.trim().isEmpty()) return defaultValue;
+        try {
+            return Integer.parseInt(val.trim());
+        } catch (NumberFormatException ex) {
+            log.warn("Invalid integer value for '{}': '{}', using default {}", key, val.trim(), defaultValue);
+            return defaultValue;
+        }
     }
 
     public Path getBaseDirPath() {

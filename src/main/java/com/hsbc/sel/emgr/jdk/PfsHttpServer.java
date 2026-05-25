@@ -232,7 +232,7 @@ public final class PfsHttpServer {
     private void renderQueueRecordsSection(StringBuilder html) {
         html.append("<div class='card'><h3>Queue Recent Results (DB)</h3>");
         try {
-            List<QueueRecord> rows = queueService.getQueueRecords(null, null, null, null, null, null, 0, properties.getQueueRecentRows());
+            List<QueueRecord> rows = queueService.getQueuePage(null, null, null, null, null, null, 0, properties.getQueueRecentRows()).getRecords();
             html.append("<p>rows=").append(rows.size()).append("</p>");
             html.append("<table width='100%' border='1' cellspacing='0' cellpadding='4' style='border-collapse:collapse;font-size:12px'>");
             html.append("<tr><th>SMTP_ID</th><th>APP</th><th>REF_NO</th><th>RECEIVER</th><th>S_FLAG</th><th>C_TIME</th><th>HTML</th></tr>");

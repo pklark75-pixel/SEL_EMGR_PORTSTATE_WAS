@@ -93,52 +93,6 @@ public class PfsEmailQueueService {
         }
     }
 
-    // ── 큐 레코드 조회 (페이징 + 필터 통합) ─────────────────────────────────
-
-    @Transactional(readOnly = true)
-    @Retryable(retryFor = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2))
-    public List<QueueRecord> getQueueRecords(String filterTime, String appFilter, String sendFlag, String keyword, String dateFrom, String dateTo, int page, int pageSize) {
-        String where = buildWhere(filterTime, appFilter, sendFlag, keyword, dateFrom, dateTo);
-        int offset = Math.max(page, 0) * pageSize;
-
-        String sql = "SELECT I.SMTP_ID, I.APP_NAME, I.SOURCE_APP, I.REF_NO, R.RECEIVER, R.RECEIVER_NAME, I.S_FLAG, I.C_TIME, I.FUND_COUNT,"
-            + " COALESCE(OCTET_LENGTH(F.DATAFILE), 0) AS FILE_SIZE"
-            + " FROM " + properties.getQueueInfoTable() + " I"
-            + " LEFT JOIN " + properties.getQueueRecvTable() + " R"
-            + " ON I.SMTP_ID = R.SMTP_ID AND I.APP_NAME = R.APP_NAME"
-            + " LEFT JOIN " + properties.getQueueFilesTable() + " F"
-            + " ON I.SMTP_ID = F.SMTP_ID AND I.APP_NAME = F.APP_NAME"
-            + " " + where
-            + " ORDER BY I.C_TIME DESC, I.SMTP_ID DESC"
-            + " OFFSET " + offset + " ROWS FETCH FIRST " + pageSize + " ROWS ONLY";
-
-        List<QueueRecord> rows = new ArrayList<QueueRecord>();
-        try (Connection conn = openConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            bindParams(ps, filterTime, appFilter, sendFlag, keyword, dateFrom, dateTo);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    QueueRecord r = new QueueRecord();
-                    r.setSmtpId(rs.getLong(1));
-                    r.setAppName(rs.getString(2));
-                    r.setSourceApp(rs.getString(3));
-                    r.setRefNo(rs.getString(4));
-                    r.setReceiver(rs.getString(5));
-                    r.setReceiverName(rs.getString(6));
-                    r.setSendFlag(rs.getString(7));
-                    Timestamp ts = rs.getTimestamp(8);
-                    r.setCreatedTime(ts == null ? "" : ts.toString());
-                    r.setFundCount(rs.getInt(9));
-                    r.setFileSize(rs.getLong(10));
-                    rows.add(r);
-                }
-            }
-            return rows;
-        } catch (Exception ex) {
-            throw new IllegalStateException("Failed to read queue records", ex);
-        }
-    }
-
     // ── 큐 페이지 조회 (count + records 동일 트랜잭션) ───────────────────────
 
     @Transactional(readOnly = true)
@@ -372,13 +326,14 @@ public class PfsEmailQueueService {
 
     // ── 업로드 이력 ──────────────────────────────────────────────────────────
 
+    @Transactional(rollbackFor = Exception.class)
     public void saveUploadHistory(boolean success, int importedCount, int hsbcQueued, int hredQueued, String message, String uploadUser) {
         String sql = "INSERT INTO " + properties.getUploadAuditTable()
             + " (AUDIT_ID, EVENT_TIME, IMPORTED_COUNT, HSBC_QUEUED, HRED_QUEUED, SUCCESS_FLAG, MESSAGE, UPLOAD_USER)"
             + " VALUES (?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?, ?)";
 
-        try (Connection conn = openConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        Connection conn = DataSourceUtils.getConnection(dataSource);
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, nextAuditId());
             ps.setInt(2, importedCount);
             ps.setInt(3, hsbcQueued);
@@ -389,6 +344,8 @@ public class PfsEmailQueueService {
             ps.executeUpdate();
         } catch (Exception ex) {
             throw new IllegalStateException("Failed to save upload history", ex);
+        } finally {
+            DataSourceUtils.releaseConnection(conn, dataSource);
         }
     }
 
