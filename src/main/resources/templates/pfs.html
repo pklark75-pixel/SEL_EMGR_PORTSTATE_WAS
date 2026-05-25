@@ -81,6 +81,26 @@
         .alert-err { background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; }
         .alert-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
 
+        /* ── Stat cards ── */
+        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        @media (max-width: 768px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+        .stat-card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 16px 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.07);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            border-left: 3px solid transparent;
+        }
+        .stat-card.pending  { border-left-color: #f59e0b; }
+        .stat-card.sent     { border-left-color: #10b981; }
+        .stat-card.total    { border-left-color: #3b82f6; }
+        .stat-card.upload   { border-left-color: #8b5cf6; }
+        .stat-num   { font-size: 26px; font-weight: 700; color: #0f172a; }
+        .stat-label { font-size: 12px; color: #94a3b8; font-weight: 500; }
+
         /* ── Card ── */
         .card {
             background: #fff;
@@ -189,31 +209,75 @@
         .badge-fail  { background: #fee2e2; color: #991b1b; }
         .badge-fund  { background: #ede9fe; color: #5b21b6; }
 
-        /* ── Filter bar ── */
-        .filter-bar {
-            display: flex;
-            align-items: center;
-            gap: 6px;
+        /* ── Filter section ── */
+        .filter-section {
             padding: 12px 20px;
             background: #f8fafc;
             border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .filter-search-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
             flex-wrap: wrap;
         }
-        .filter-label { font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; margin-right: 4px; }
-        .filter-btn {
-            font-size: 12px;
-            font-weight: 500;
-            padding: 4px 12px;
-            border-radius: 20px;
+        .filter-keyword {
+            flex: 1;
+            min-width: 180px;
+            font-size: 13px;
             border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 7px 12px;
+            background: #fff;
+            color: #1e293b;
+            outline: none;
+        }
+        .filter-keyword:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,.15); }
+        .filter-date {
+            font-size: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 7px 10px;
             background: #fff;
             color: #475569;
-            text-decoration: none;
-            transition: all .15s;
-            cursor: pointer;
+        }
+        .filter-date-sep { font-size: 13px; color: #94a3b8; }
+        .btn-search {
+            background: #2563eb; color: #fff; border: none;
+            border-radius: 6px; padding: 7px 16px;
+            font-size: 12px; font-weight: 600; cursor: pointer;
+        }
+        .btn-search:hover { background: #1d4ed8; }
+        .btn-reset {
+            font-size: 12px; color: #64748b; text-decoration: none;
+            padding: 7px 12px; border: 1px solid #e2e8f0;
+            border-radius: 6px; background: #fff;
+        }
+        .btn-reset:hover { background: #f1f5f9; }
+        .filter-pills-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .filter-label { font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; margin-right: 2px; }
+        .filter-sep { width: 1px; height: 16px; background: #e2e8f0; margin: 0 6px; }
+        .filter-btn {
+            font-size: 12px; font-weight: 500;
+            padding: 4px 12px; border-radius: 20px;
+            border: 1px solid #e2e8f0; background: #fff; color: #475569;
+            cursor: pointer; transition: all .15s;
         }
         .filter-btn:hover { background: #f1f5f9; border-color: #cbd5e1; }
         .filter-btn.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+        .filter-select {
+            font-size: 12px; border: 1px solid #e2e8f0;
+            border-radius: 6px; padding: 4px 8px;
+            background: #fff; color: #475569; cursor: pointer;
+        }
         .filter-time-clear { font-size: 11px; color: #94a3b8; text-decoration: none; margin-left: 4px; }
         .filter-time-clear:hover { color: #64748b; }
         .filter-time-active {
@@ -222,6 +286,23 @@
             color: #1e40af; font-size: 11px; font-weight: 600;
             padding: 3px 10px; border-radius: 20px;
         }
+
+        /* ── Delete bar ── */
+        .delete-bar {
+            padding: 8px 20px;
+            background: #fef9c3;
+            border-bottom: 1px solid #fde68a;
+            display: none;
+            align-items: center;
+            gap: 12px;
+        }
+        .delete-bar span { font-size: 13px; font-weight: 500; color: #92400e; }
+        .btn-danger {
+            background: #dc2626; color: #fff; border: none;
+            border-radius: 6px; padding: 5px 14px;
+            font-size: 12px; font-weight: 600; cursor: pointer;
+        }
+        .btn-danger:hover { background: #b91c1c; }
 
         /* ── Pager ── */
         .pager {
@@ -233,15 +314,10 @@
             border-top: 1px solid #f1f5f9;
         }
         .pager-btn {
-            font-size: 12px;
-            font-weight: 500;
-            padding: 5px 14px;
-            border-radius: 6px;
-            border: 1px solid #e2e8f0;
-            background: #fff;
-            color: #374151;
-            text-decoration: none;
-            transition: all .15s;
+            font-size: 12px; font-weight: 500;
+            padding: 5px 14px; border-radius: 6px;
+            border: 1px solid #e2e8f0; background: #fff;
+            color: #374151; text-decoration: none; transition: all .15s;
         }
         .pager-btn:hover { background: #f1f5f9; }
         .pager-btn.disabled { color: #cbd5e1; cursor: default; pointer-events: none; border-color: #f1f5f9; background: #fafafa; }
@@ -254,15 +330,21 @@
 
         /* ── Preview link ── */
         .preview-link {
-            font-size: 11px;
-            color: #2563eb;
-            text-decoration: none;
-            padding: 2px 7px;
-            border: 1px solid #bfdbfe;
-            border-radius: 4px;
-            white-space: nowrap;
+            font-size: 11px; color: #2563eb; text-decoration: none;
+            padding: 2px 7px; border: 1px solid #bfdbfe;
+            border-radius: 4px; white-space: nowrap; cursor: pointer;
+            background: none;
         }
         .preview-link:hover { background: #eff6ff; }
+
+        /* ── Refresh toggle ── */
+        .btn-refresh {
+            font-size: 11px; font-weight: 600; color: #64748b;
+            background: #fff; border: 1px solid #e2e8f0;
+            border-radius: 20px; padding: 3px 10px; cursor: pointer; transition: all .15s;
+        }
+        .btn-refresh:hover { border-color: #3b82f6; color: #3b82f6; }
+        .btn-refresh.active { background: #eff6ff; border-color: #3b82f6; color: #2563eb; }
 
         /* ── Mono text ── */
         .mono { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 11.5px; color: #475569; }
@@ -278,6 +360,30 @@
         .icon-upload { background: #eff6ff; }
         .icon-history { background: #f0fdf4; }
         .icon-queue   { background: #fdf4ff; }
+
+        /* ── Modal ── */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,.5); z-index: 200;
+            align-items: center; justify-content: center;
+        }
+        .modal-box {
+            background: #fff; border-radius: 10px;
+            width: 90%; max-width: 960px; height: 85vh;
+            display: flex; flex-direction: column; overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,.3);
+        }
+        .modal-header {
+            padding: 14px 16px; display: flex; align-items: center; gap: 10px;
+            border-bottom: 1px solid #e2e8f0; flex-shrink: 0;
+        }
+        .modal-header span { flex: 1; font-weight: 600; font-size: 14px; color: #0f172a; }
+        .modal-close {
+            background: none; border: none; cursor: pointer;
+            font-size: 16px; color: #64748b; padding: 4px 8px; border-radius: 4px;
+        }
+        .modal-close:hover { background: #f1f5f9; }
+        .modal-frame { flex: 1; border: none; width: 100%; }
     </style>
 </head>
 <body>
@@ -309,6 +415,26 @@
     <div th:if="${dbError}" class="alert alert-err">
         <span class="alert-icon">⚠</span>
         <span th:text="${dbError}"></span>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="stats-row" th:if="${stats != null}">
+        <div class="stat-card pending">
+            <div class="stat-num" th:text="${#numbers.formatInteger(stats.pendingCount, 1, 'COMMA')}">0</div>
+            <div class="stat-label">대기 중</div>
+        </div>
+        <div class="stat-card sent">
+            <div class="stat-num" th:text="${#numbers.formatInteger(stats.sentCount, 1, 'COMMA')}">0</div>
+            <div class="stat-label">발송 완료</div>
+        </div>
+        <div class="stat-card total">
+            <div class="stat-num" th:text="${#numbers.formatInteger(stats.totalQueueCount, 1, 'COMMA')}">0</div>
+            <div class="stat-label">총 큐 건수</div>
+        </div>
+        <div class="stat-card upload">
+            <div class="stat-num" th:text="${stats.todayUploadCount}">0</div>
+            <div class="stat-label">오늘 업로드</div>
+        </div>
     </div>
 
     <!-- ZIP Upload -->
@@ -379,97 +505,142 @@
             <span class="card-meta" th:if="${filterTime != null and filterTime != ''}">
                 <span class="filter-time-active">
                     🕐 <span th:text="${filterTime}"></span>
-                    <a th:href="@{/pfs(appFilter=${appFilter})}" class="filter-time-clear" title="시간 필터 해제">✕</a>
+                    <a th:href="@{/pfs(appFilter=${appFilter}, sendFlag=${sendFlag}, keyword=${keyword}, dateFrom=${dateFrom}, dateTo=${dateTo}, pageSize=${pageSize})}"
+                       class="filter-time-clear" title="시간 필터 해제">✕</a>
                 </span>
             </span>
             <span class="card-meta" th:text="'총 ' + ${totalCount} + '건'"></span>
+            <button class="btn-refresh" id="refreshBtn" onclick="toggleRefresh(this)">⟳ 자동 새로고침</button>
         </div>
 
-        <!-- Filter bar -->
-        <div class="filter-bar">
-            <span class="filter-label">출처</span>
+        <!-- Filter section -->
+        <div class="filter-section">
+            <form id="filterForm" method="get" th:action="@{/pfs}">
+                <input type="hidden" id="f_page"      name="page"      value="0">
+                <input type="hidden" id="f_appFilter" name="appFilter" th:value="${appFilter}">
+                <input type="hidden" id="f_sendFlag"  name="sendFlag"  th:value="${sendFlag}">
+                <input type="hidden" name="filterTime" th:value="${filterTime}">
+                <input type="hidden" name="pageSize"  th:value="${pageSize}">
 
-            <th:block th:if="${appFilter == null or appFilter == ''}">
-                <span class="filter-btn active">전체</span>
-            </th:block>
-            <th:block th:unless="${appFilter == null or appFilter == ''}">
-                <a class="filter-btn" th:href="@{/pfs(filterTime=${filterTime}, page=0)}">전체</a>
-            </th:block>
+                <!-- 검색 행 -->
+                <div class="filter-search-row">
+                    <input type="text" name="keyword" th:value="${keyword}"
+                           placeholder="고객번호 / 이메일 검색" class="filter-keyword">
+                    <input type="date" name="dateFrom" th:value="${dateFrom}" class="filter-date">
+                    <span class="filter-date-sep">~</span>
+                    <input type="date" name="dateTo" th:value="${dateTo}" class="filter-date">
+                    <button type="submit" class="btn-search">검색</button>
+                    <a th:href="@{/pfs}" class="btn-reset">초기화</a>
+                </div>
 
-            <th:block th:if="${appFilter == 'KRHSBC'}">
-                <span class="filter-btn active">KRHSBC</span>
-            </th:block>
-            <th:block th:unless="${appFilter == 'KRHSBC'}">
-                <a class="filter-btn" th:href="@{/pfs(appFilter='KRHSBC', filterTime=${filterTime}, page=0)}">KRHSBC</a>
-            </th:block>
+                <!-- 필터 필 행 -->
+                <div class="filter-pills-row">
+                    <span class="filter-label">출처</span>
+                    <span class="filter-btn" th:classappend="${appFilter == null or appFilter == ''} ? ' active'"
+                          onclick="filterBy('appFilter','')">전체</span>
+                    <span class="filter-btn" th:classappend="${appFilter == 'KRHSBC'} ? ' active'"
+                          onclick="filterBy('appFilter','KRHSBC')">KRHSBC</span>
+                    <span class="filter-btn" th:classappend="${appFilter == 'KRHRED'} ? ' active'"
+                          onclick="filterBy('appFilter','KRHRED')">KRHRED</span>
 
-            <th:block th:if="${appFilter == 'KRHRED'}">
-                <span class="filter-btn active">KRHRED</span>
-            </th:block>
-            <th:block th:unless="${appFilter == 'KRHRED'}">
-                <a class="filter-btn" th:href="@{/pfs(appFilter='KRHRED', filterTime=${filterTime}, page=0)}">KRHRED</a>
-            </th:block>
+                    <div class="filter-sep"></div>
+
+                    <span class="filter-label">상태</span>
+                    <span class="filter-btn" th:classappend="${sendFlag == null or sendFlag == ''} ? ' active'"
+                          onclick="filterBy('sendFlag','')">전체</span>
+                    <span class="filter-btn" th:classappend="${sendFlag == 'N'} ? ' active'"
+                          onclick="filterBy('sendFlag','N')">대기</span>
+                    <span class="filter-btn" th:classappend="${sendFlag == 'Y'} ? ' active'"
+                          onclick="filterBy('sendFlag','Y')">발송완료</span>
+
+                    <div style="margin-left:auto; display:flex; align-items:center; gap:6px;">
+                        <span class="filter-label">표시</span>
+                        <select class="filter-select" id="pageSizeSelect" onchange="changePageSize(this.value)">
+                            <option value="10"  th:selected="${pageSize == 10}">10건</option>
+                            <option value="20"  th:selected="${pageSize == 20}">20건</option>
+                            <option value="50"  th:selected="${pageSize == 50}">50건</option>
+                            <option value="100" th:selected="${pageSize == 100}">100건</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
         </div>
 
-        <!-- Table -->
-        <div class="tbl-wrap">
-            <table>
-                <thead>
-                    <tr>
-                        <th>SMTP ID</th>
-                        <th>출처</th>
-                        <th>고객번호 (REF_NO)</th>
-                        <th>수신자</th>
-                        <th>상태</th>
-                        <th>펀드 수</th>
-                        <th>HTML 크기</th>
-                        <th>생성 시각</th>
-                        <th>HTML</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr th:each="r : ${queueRecords}">
-                        <td class="mono" th:text="${r.smtpId}"></td>
-                        <td>
-                            <span th:if="${r.sourceApp == 'KRHSBC'}" class="badge badge-hsbc">KRHSBC</span>
-                            <span th:if="${r.sourceApp == 'KRHRED'}" class="badge badge-hred">KRHRED</span>
-                            <span th:if="${r.sourceApp != 'KRHSBC' and r.sourceApp != 'KRHRED'}" class="mono" th:text="${r.sourceApp}"></span>
-                        </td>
-                        <td class="mono" th:text="${r.refNo}"></td>
-                        <td style="color:#475569;">
-                            <span th:if="${r.receiverName != null and !r.receiverName.trim().isEmpty()}"
-                                  th:text="${r.receiverName}"
-                                  style="font-weight:500; color:#1e293b; margin-right:4px;"></span>
-                            <span th:text="${r.receiver}" class="mono" style="font-size:11px;"></span>
-                        </td>
-                        <td>
-                            <span th:if="${r.sendFlag == 'Y'}" class="badge badge-sent">발송완료</span>
-                            <span th:unless="${r.sendFlag == 'Y'}" class="badge badge-unsent">대기</span>
-                        </td>
-                        <td>
-                            <span class="badge badge-fund" th:text="${r.fundCount} + '건'"></span>
-                        </td>
-                        <td class="mono" th:text="${#numbers.formatDecimal(r.fileSize / 1024.0, 1, 1) + ' KB'}"></td>
-                        <td class="mono" style="font-size:11px;" th:text="${r.createdTime}"></td>
-                        <td>
-                            <a th:if="${r.refNo != null and !r.refNo.trim().isEmpty()}"
-                               class="preview-link"
-                               th:href="@{/pfs/html-file(id=${r.smtpId}, app=${r.appName}, name=${r.refNo.trim() + '.html'})}"
-                               target="_blank">미리보기</a>
-                        </td>
-                    </tr>
-                    <tr th:if="${#lists.isEmpty(queueRecords)}" class="empty-row">
-                        <td colspan="9">조회된 레코드가 없습니다.</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+        <!-- Delete form wrapping table -->
+        <form id="deleteForm" th:action="@{/pfs/queue/delete}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+            <!-- 삭제 바 (체크 시 노출) -->
+            <div class="delete-bar" id="deleteBar">
+                <span id="selectedCount">0건 선택됨</span>
+                <button type="button" class="btn-danger" onclick="confirmDelete()">선택 삭제</button>
+            </div>
+
+            <div class="tbl-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:36px;"><input type="checkbox" id="selectAll" onchange="toggleAll(this)"></th>
+                            <th>SMTP ID</th>
+                            <th>출처</th>
+                            <th>고객번호 (REF_NO)</th>
+                            <th>수신자</th>
+                            <th>상태</th>
+                            <th>펀드 수</th>
+                            <th>HTML 크기</th>
+                            <th>생성 시각</th>
+                            <th>HTML</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="r : ${queueRecords}">
+                            <td><input type="checkbox" name="smtpIds"
+                                       th:value="${r.smtpId + ':' + r.appName}"
+                                       class="row-check" onchange="updateDeleteBar()"></td>
+                            <td class="mono" th:text="${r.smtpId}"></td>
+                            <td>
+                                <span th:if="${r.sourceApp == 'KRHSBC'}" class="badge badge-hsbc">KRHSBC</span>
+                                <span th:if="${r.sourceApp == 'KRHRED'}" class="badge badge-hred">KRHRED</span>
+                                <span th:if="${r.sourceApp != 'KRHSBC' and r.sourceApp != 'KRHRED'}"
+                                      class="mono" th:text="${r.sourceApp}"></span>
+                            </td>
+                            <td class="mono" th:text="${r.refNo}"></td>
+                            <td style="color:#475569;">
+                                <span th:if="${r.receiverName != null and !r.receiverName.trim().isEmpty()}"
+                                      th:text="${r.receiverName}"
+                                      style="font-weight:500; color:#1e293b; margin-right:4px;"></span>
+                                <span th:text="${r.receiver}" class="mono" style="font-size:11px;"></span>
+                            </td>
+                            <td>
+                                <span th:if="${r.sendFlag == 'Y'}" class="badge badge-sent">발송완료</span>
+                                <span th:unless="${r.sendFlag == 'Y'}" class="badge badge-unsent">대기</span>
+                            </td>
+                            <td>
+                                <span class="badge badge-fund" th:text="${r.fundCount} + '건'"></span>
+                            </td>
+                            <td class="mono" th:text="${#numbers.formatDecimal(r.fileSize / 1024.0, 1, 1) + ' KB'}"></td>
+                            <td class="mono" style="font-size:11px;" th:text="${r.createdTime}"></td>
+                            <td>
+                                <button th:if="${r.refNo != null and !r.refNo.trim().isEmpty()}"
+                                        type="button"
+                                        class="preview-link"
+                                        th:onclick="'openPreview(\'' + @{/pfs/html-file(id=${r.smtpId}, app=${r.appName}, name=${r.refNo.trim() + '.html'})} + '\',\'' + ${r.refNo} + '.html\'')"
+                                        >미리보기</button>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(queueRecords)}" class="empty-row">
+                            <td colspan="10">조회된 레코드가 없습니다.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </form>
 
         <!-- Pager -->
         <div class="pager">
             <a th:if="${page > 0}"
                class="pager-btn"
-               th:href="@{/pfs(page=${page - 1}, filterTime=${filterTime}, appFilter=${appFilter})}">← 이전</a>
+               th:href="@{/pfs(page=${page - 1}, filterTime=${filterTime}, appFilter=${appFilter}, sendFlag=${sendFlag}, keyword=${keyword}, dateFrom=${dateFrom}, dateTo=${dateTo}, pageSize=${pageSize})}">← 이전</a>
             <span th:unless="${page > 0}" class="pager-btn disabled">← 이전</span>
 
             <span class="pager-info"
@@ -477,11 +648,96 @@
 
             <a th:if="${page < totalPages - 1}"
                class="pager-btn"
-               th:href="@{/pfs(page=${page + 1}, filterTime=${filterTime}, appFilter=${appFilter})}">다음 →</a>
+               th:href="@{/pfs(page=${page + 1}, filterTime=${filterTime}, appFilter=${appFilter}, sendFlag=${sendFlag}, keyword=${keyword}, dateFrom=${dateFrom}, dateTo=${dateTo}, pageSize=${pageSize})}">다음 →</a>
             <span th:unless="${page < totalPages - 1}" class="pager-btn disabled">다음 →</span>
         </div>
     </div>
 
 </main>
+
+<!-- HTML 미리보기 모달 -->
+<div id="previewModal" class="modal-overlay" onclick="closePreviewOutside(event)">
+    <div class="modal-box">
+        <div class="modal-header">
+            <span id="modalTitle">HTML 미리보기</span>
+            <button type="button" class="modal-close" onclick="closePreview()">✕</button>
+        </div>
+        <iframe id="previewFrame" src="" class="modal-frame"></iframe>
+    </div>
+</div>
+
+<script>
+    /* ── 필터 필 버튼 ── */
+    function filterBy(name, value) {
+        document.getElementById('f_' + name).value = value;
+        document.getElementById('f_page').value = '0';
+        document.getElementById('filterForm').submit();
+    }
+
+    function changePageSize(value) {
+        document.querySelector('#filterForm input[name="pageSize"]').value = value;
+        document.getElementById('f_page').value = '0';
+        document.getElementById('filterForm').submit();
+    }
+
+    /* ── 체크박스 & 삭제 ── */
+    function updateDeleteBar() {
+        const checked = document.querySelectorAll('.row-check:checked');
+        const bar = document.getElementById('deleteBar');
+        bar.style.display = checked.length > 0 ? 'flex' : 'none';
+        document.getElementById('selectedCount').textContent = checked.length + '건 선택됨';
+        document.getElementById('selectAll').indeterminate =
+            checked.length > 0 && checked.length < document.querySelectorAll('.row-check').length;
+    }
+
+    function toggleAll(cb) {
+        document.querySelectorAll('.row-check').forEach(c => { c.checked = cb.checked; });
+        updateDeleteBar();
+    }
+
+    function confirmDelete() {
+        const checked = document.querySelectorAll('.row-check:checked');
+        if (checked.length === 0) return;
+        if (confirm(checked.length + '건을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) {
+            document.getElementById('deleteForm').submit();
+        }
+    }
+
+    /* ── HTML 미리보기 모달 ── */
+    function openPreview(url, title) {
+        document.getElementById('previewFrame').src = url;
+        document.getElementById('modalTitle').textContent = title || 'HTML 미리보기';
+        document.getElementById('previewModal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closePreview() {
+        document.getElementById('previewModal').style.display = 'none';
+        document.getElementById('previewFrame').src = '';
+        document.body.style.overflow = '';
+    }
+
+    function closePreviewOutside(e) {
+        if (e.target === document.getElementById('previewModal')) closePreview();
+    }
+
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closePreview(); });
+
+    /* ── 자동 새로고침 ── */
+    let refreshTimer = null;
+
+    function toggleRefresh(btn) {
+        if (refreshTimer) {
+            clearInterval(refreshTimer);
+            refreshTimer = null;
+            btn.textContent = '⟳ 자동 새로고침';
+            btn.classList.remove('active');
+        } else {
+            refreshTimer = setInterval(() => location.reload(), 30000);
+            btn.textContent = '⟳ ON (30s)';
+            btn.classList.add('active');
+        }
+    }
+</script>
 </body>
 </html>

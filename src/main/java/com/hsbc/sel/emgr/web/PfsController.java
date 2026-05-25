@@ -29,7 +29,7 @@ public class PfsController {
 
     private static final Logger log = LoggerFactory.getLogger(PfsController.class);
 
-    private static final int PAGE_SIZE = 10;
+    private static final int[] VALID_PAGE_SIZES = {10, 20, 50, 100};
 
     private final PfsProperties properties;
     private final PfsStorageService storageService;
@@ -52,14 +52,32 @@ public class PfsController {
     @GetMapping("/pfs")
     public String home(@RequestParam(value = "filterTime", required = false) String filterTime,
                        @RequestParam(value = "appFilter",  required = false) String appFilter,
-                       @RequestParam(value = "page", defaultValue = "0") int page,
+                       @RequestParam(value = "sendFlag",   required = false) String sendFlag,
+                       @RequestParam(value = "keyword",    required = false) String keyword,
+                       @RequestParam(value = "dateFrom",   required = false) String dateFrom,
+                       @RequestParam(value = "dateTo",     required = false) String dateTo,
+                       @RequestParam(value = "page",       defaultValue = "0") int page,
+                       @RequestParam(value = "pageSize",   defaultValue = "10") int pageSize,
                        Model model) {
+
+        int safePageSize = 10;
+        for (int v : VALID_PAGE_SIZES) { if (pageSize == v) { safePageSize = v; break; } }
 
         model.addAttribute("uploadHistoryRows", properties.getUploadHistoryRows());
         model.addAttribute("filterTime", filterTime);
-        model.addAttribute("appFilter", appFilter);
-        model.addAttribute("page", page);
-        model.addAttribute("pageSize", PAGE_SIZE);
+        model.addAttribute("appFilter",  appFilter);
+        model.addAttribute("sendFlag",   sendFlag);
+        model.addAttribute("keyword",    keyword);
+        model.addAttribute("dateFrom",   dateFrom);
+        model.addAttribute("dateTo",     dateTo);
+        model.addAttribute("page",       page);
+        model.addAttribute("pageSize",   safePageSize);
+
+        try {
+            model.addAttribute("stats", queueService.getSummaryStats());
+        } catch (Exception ex) {
+            model.addAttribute("stats", new com.hsbc.sel.emgr.model.DashboardStats());
+        }
 
         try {
             List<UploadHistoryRecord> histories = queueService.getRecentUploadHistories(properties.getUploadHistoryRows());
@@ -70,15 +88,15 @@ public class PfsController {
         }
 
         try {
-            int totalCount = queueService.countQueueRecords(filterTime, appFilter);
-            int totalPages = totalCount == 0 ? 1 : (totalCount + PAGE_SIZE - 1) / PAGE_SIZE;
+            int totalCount = queueService.countQueueRecords(filterTime, appFilter, sendFlag, keyword, dateFrom, dateTo);
+            int totalPages = totalCount == 0 ? 1 : (totalCount + safePageSize - 1) / safePageSize;
             int safePage   = Math.min(Math.max(page, 0), totalPages - 1);
 
-            List<QueueRecord> records = queueService.getQueueRecords(filterTime, appFilter, safePage, PAGE_SIZE);
+            List<QueueRecord> records = queueService.getQueueRecords(filterTime, appFilter, sendFlag, keyword, dateFrom, dateTo, safePage, safePageSize);
             model.addAttribute("queueRecords", records);
-            model.addAttribute("totalCount", totalCount);
-            model.addAttribute("totalPages", totalPages);
-            model.addAttribute("page", safePage);
+            model.addAttribute("totalCount",   totalCount);
+            model.addAttribute("totalPages",   totalPages);
+            model.addAttribute("page",         safePage);
         } catch (Exception ex) {
             model.addAttribute("queueRecords", Collections.emptyList());
             model.addAttribute("totalCount", 0);
@@ -89,6 +107,29 @@ public class PfsController {
         }
 
         return "pfs";
+    }
+
+    @PostMapping("/pfs/queue/delete")
+    public String deleteQueue(@RequestParam(value = "smtpIds", required = false) List<String> smtpIds,
+                              RedirectAttributes redirect) {
+        if (smtpIds == null || smtpIds.isEmpty()) {
+            redirect.addFlashAttribute("error", "삭제할 레코드를 선택하세요.");
+            return "redirect:/pfs";
+        }
+        int deleted = 0;
+        for (String token : smtpIds) {
+            String[] parts = token.split(":", 2);
+            if (parts.length == 2) {
+                try {
+                    queueService.deleteQueueRecord(Long.parseLong(parts[0].trim()), parts[1].trim());
+                    deleted++;
+                } catch (Exception ex) {
+                    log.warn("queue delete failed for {}: {}", token, ex.getMessage());
+                }
+            }
+        }
+        redirect.addFlashAttribute("message", deleted + "건 삭제 완료");
+        return "redirect:/pfs";
     }
 
     @PostMapping("/pfs/upload-zip")
