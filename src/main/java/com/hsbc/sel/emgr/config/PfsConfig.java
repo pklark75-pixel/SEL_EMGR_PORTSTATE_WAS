@@ -8,8 +8,12 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @Configuration
+@EnableTransactionManagement
 public class PfsConfig {
 
     @Bean
@@ -32,6 +36,11 @@ public class PfsConfig {
         config.setInitializationFailTimeout(-1);
         config.setPoolName("pfs-hikari");
         return new HikariDataSource(config);
+    }
+
+    @Bean
+    public PlatformTransactionManager transactionManager(HikariDataSource dataSource) {
+        return new DataSourceTransactionManager(dataSource);
     }
 
     @Bean

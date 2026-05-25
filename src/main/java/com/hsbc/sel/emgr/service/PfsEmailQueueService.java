@@ -19,8 +19,10 @@ import com.hsbc.sel.emgr.model.DashboardStats;
 import com.hsbc.sel.emgr.model.QueueRecord;
 import com.hsbc.sel.emgr.model.QueueSummary;
 import com.hsbc.sel.emgr.model.UploadHistoryRecord;
+import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
+import org.springframework.transaction.annotation.Transactional;
 
 public class PfsEmailQueueService {
 
@@ -39,6 +41,7 @@ public class PfsEmailQueueService {
         this.dataSource = dataSource;
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public QueueSummary queueEmailsFromGeneratedHtml() {
         if (!properties.isDbQueueEnabled()) {
             throw new IllegalStateException("DB queue is disabled. Set db.queue.enabled=true in files/pfs-jdk.properties");
@@ -51,11 +54,8 @@ public class PfsEmailQueueService {
 
         String content = templateService.readEmailContentTemplate();
 
-        Connection conn = null;
+        Connection conn = DataSourceUtils.getConnection(dataSource);
         try {
-            conn = dataSource.getConnection();
-            conn.setAutoCommit(false);
-
             QueueSummary summary = new QueueSummary();
 
             List<com.hsbc.sel.emgr.model.Customer> hsbcCustomers = batchService.loadCustomers(validation, false);
@@ -78,18 +78,12 @@ public class PfsEmailQueueService {
                 summary.setInfoTableCount(countRowsByRange(conn, properties.getQueueInfoTable(), minId, maxId));
             }
 
-            conn.commit();
             return summary;
 
         } catch (Exception ex) {
-            if (conn != null) {
-                try { conn.rollback(); } catch (Exception re) { /* ignore */ }
-            }
             throw new IllegalStateException("Queue insert failed", ex);
         } finally {
-            if (conn != null) {
-                try { conn.close(); } catch (Exception ce) { /* ignore */ }
-            }
+            DataSourceUtils.releaseConnection(conn, dataSource);
         }
     }
 
@@ -186,11 +180,10 @@ public class PfsEmailQueueService {
 
     // ── 큐 레코드 삭제 ───────────────────────────────────────────────────────
 
+    @Transactional(rollbackFor = Exception.class)
     public void deleteQueueRecord(long smtpId, String appName) {
-        Connection conn = null;
+        Connection conn = DataSourceUtils.getConnection(dataSource);
         try {
-            conn = openConnection();
-            conn.setAutoCommit(false);
             for (String tbl : new String[]{properties.getQueueFilesTable(), properties.getQueueRecvTable(), properties.getQueueInfoTable()}) {
                 try (PreparedStatement ps = conn.prepareStatement("DELETE FROM " + tbl + " WHERE SMTP_ID = ? AND APP_NAME = ?")) {
                     ps.setLong(1, smtpId);
@@ -198,12 +191,10 @@ public class PfsEmailQueueService {
                     ps.executeUpdate();
                 }
             }
-            conn.commit();
         } catch (Exception ex) {
-            if (conn != null) { try { conn.rollback(); } catch (Exception re) { /* ignore */ } }
             throw new IllegalStateException("Queue delete failed: smtpId=" + smtpId, ex);
         } finally {
-            if (conn != null) { try { conn.close(); } catch (Exception ce) { /* ignore */ } }
+            DataSourceUtils.releaseConnection(conn, dataSource);
         }
     }
 

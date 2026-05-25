@@ -1,5 +1,7 @@
 server:
-  port: 8080
+  servlet:
+    session:
+      timeout: 15m
 
 app:
   security:
@@ -25,3 +27,9 @@ management:
   endpoint:
     health:
       show-details: always
+
+logging:
+  level:
+    com.hsbc.sel.emgr: INFO
+    com.zaxxer.hikari: WARN
+    org.springframework.security: WARN
