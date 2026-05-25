@@ -234,16 +234,17 @@
       <div class="section-body">
 
         <h3 id="upload-files">필수 파일 구성</h3>
-        <p>ZIP 파일 안에 아래 <strong>6개 CSV 파일</strong>이 반드시 포함되어야 합니다.</p>
-        <table>
-          <thead><tr><th>출처</th><th>파일 종류</th><th>파일명 패턴</th></tr></thead>
+        <p>파일명 형식: <code>(KRHSBC|KRHRED)_UT_YYYYMMDD_1_(CustAttr|CustSubs|EmailCustMast).txt</code></p>
+        <p style="margin-top:8px">파일 수는 <strong>4개 또는 6개</strong>를 허용합니다. 필수 4개가 있으면 처리되고, CustSubs 2개는 선택입니다.</p>
+        <table style="margin-top:10px">
+          <thead><tr><th>출처</th><th>파일 종류</th><th>파일명 예시</th><th>필수</th></tr></thead>
           <tbody>
-            <tr><td><span class="badge badge-blue">KRHSBC</span></td><td>고객 속성</td><td><code>*CustAttr*</code></td></tr>
-            <tr><td><span class="badge badge-blue">KRHSBC</span></td><td>고객 구독</td><td><code>*CustSubs*</code></td></tr>
-            <tr><td><span class="badge badge-blue">KRHSBC</span></td><td>이메일 고객 마스터</td><td><code>*EmailCustMast*</code></td></tr>
-            <tr><td><span class="badge badge-pink">KRHRED</span></td><td>고객 속성</td><td><code>*CustAttr*</code></td></tr>
-            <tr><td><span class="badge badge-pink">KRHRED</span></td><td>고객 구독</td><td><code>*CustSubs*</code></td></tr>
-            <tr><td><span class="badge badge-pink">KRHRED</span></td><td>이메일 고객 마스터</td><td><code>*EmailCustMast*</code></td></tr>
+            <tr><td><span class="badge badge-blue">KRHSBC</span></td><td>고객 속성</td><td><code>KRHSBC_UT_20240115_1_CustAttr.txt</code></td><td>✓ 필수</td></tr>
+            <tr><td><span class="badge badge-blue">KRHSBC</span></td><td>이메일 고객 마스터<br><small style="color:#64748b">수신자 이름·이메일 포함</small></td><td><code>KRHSBC_UT_20240115_1_EmailCustMast.txt</code></td><td>✓ 필수</td></tr>
+            <tr><td><span class="badge badge-blue">KRHSBC</span></td><td>고객 구독<br><small style="color:#64748b">수신 동의 확인용 (현재 미사용)</small></td><td><code>KRHSBC_UT_20240115_1_CustSubs.txt</code></td><td>선택</td></tr>
+            <tr><td><span class="badge badge-pink">KRHRED</span></td><td>고객 속성</td><td><code>KRHRED_UT_20240115_1_CustAttr.txt</code></td><td>✓ 필수</td></tr>
+            <tr><td><span class="badge badge-pink">KRHRED</span></td><td>이메일 고객 마스터<br><small style="color:#64748b">수신자 이름·이메일 포함</small></td><td><code>KRHRED_UT_20240115_1_EmailCustMast.txt</code></td><td>✓ 필수</td></tr>
+            <tr><td><span class="badge badge-pink">KRHRED</span></td><td>고객 구독<br><small style="color:#64748b">수신 동의 확인용 (현재 미사용)</small></td><td><code>KRHRED_UT_20240115_1_CustSubs.txt</code></td><td>선택</td></tr>
           </tbody>
         </table>
 
@@ -280,7 +281,9 @@ smtpIdRange=1705123456000-1705123457000</code></pre>
           <tbody>
             <tr><td>최대 파일 크기</td><td>20MB (운영자가 변경 가능)</td></tr>
             <tr><td>파일 형식</td><td>.zip 만 허용</td></tr>
-            <tr><td>필수 파일 수</td><td>6개 (부족 시 검증 오류)</td></tr>
+            <tr><td>허용 파일 수</td><td>4개 또는 6개 (필수 4개 미충족 시 검증 오류)</td></tr>
+            <tr><td>파일명 형식</td><td><code>(KRHSBC|KRHRED)_UT_YYYYMMDD_1_종류.txt</code></td></tr>
+            <tr><td>모든 파일 날짜</td><td>동일한 기준일(YYYYMMDD) 이어야 함</td></tr>
           </tbody>
         </table>
       </div>

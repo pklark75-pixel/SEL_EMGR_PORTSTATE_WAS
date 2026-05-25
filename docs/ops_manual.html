@@ -501,7 +501,7 @@ curl http://localhost:9080/pfs/actuator/health
           <tbody>
             <tr><td><code>DB 연결 실패</code></td><td>PostgreSQL 연결 불가</td><td><code>db.url</code>, <code>db.user</code>, 비밀번호 및 DB 서버 상태 확인</td></tr>
             <tr><td><code>DB queue is disabled</code></td><td><code>db.queue.enabled=false</code></td><td><code>pfs-jdk.properties</code>에서 <code>true</code>로 변경</td></tr>
-            <tr><td><code>ZIP 업로드 후 검증 실패</code></td><td>필수 파일 6건 미충족</td><td>ZIP 내 파일 구성 확인 (KRHSBC/KRHRED × 3)</td></tr>
+            <tr><td><code>ZIP 업로드 후 검증 실패</code></td><td>필수 파일 미충족 또는 파일명 형식 오류</td><td>파일명 형식 확인: <code>(KRHSBC|KRHRED)_UT_YYYYMMDD_1_종류.txt</code><br>필수 4개: CustAttr + EmailCustMast × 2출처</td></tr>
             <tr><td><code>ZIP 파일 크기 초과</code></td><td>20MB 초과</td><td>ZIP 최적화 또는 <code>pfs.upload.zipMaxBytes</code> 증가</td></tr>
             <tr><td><code>DB driver loading failed</code></td><td>PostgreSQL JDBC 드라이버 누락</td><td>WAR 내 <code>postgresql-42.7.3.jar</code> 포함 확인</td></tr>
             <tr><td><code>No key source configured</code></td><td>암호화 키 미설정</td><td>환경변수 <code>PFS_DB_KEY</code> 또는 <code>db.password.keyFile</code> 설정</td></tr>
