@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PFS Console - 사용자 매뉴얼</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #1e293b; line-height: 1.7; }
+
+  /* Header */
+  .site-header { background: #0f172a; color: #f8fafc; padding: 0 40px; height: 56px; display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,.3); }
+  .site-header .logo { width: 30px; height: 30px; background: #3b82f6; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; color: #fff; flex-shrink: 0; }
+  .site-header h1 { font-size: 15px; font-weight: 600; }
+  .site-header .badge { background: #1e3a5f; color: #93c5fd; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; letter-spacing: .5px; }
+  .site-header .other-link { margin-left: auto; font-size: 12px; color: #94a3b8; text-decoration: none; border: 1px solid #334155; border-radius: 5px; padding: 4px 12px; transition: all .15s; }
+  .site-header .other-link:hover { border-color: #94a3b8; color: #f8fafc; }
+
+  /* Layout */
+  .container { display: flex; max-width: 1200px; margin: 0 auto; padding: 36px 24px; gap: 32px; }
+
+  /* TOC sidebar */
+  .toc { width: 220px; flex-shrink: 0; }
+  .toc-inner { position: sticky; top: 72px; background: #fff; border-radius: 10px; border: 1px solid #e2e8f0; padding: 16px 0; }
+  .toc-title { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .8px; padding: 0 16px 10px; border-bottom: 1px solid #f1f5f9; margin-bottom: 8px; }
+  .toc a { display: block; font-size: 13px; color: #475569; text-decoration: none; padding: 5px 16px; border-left: 2px solid transparent; transition: all .12s; }
+  .toc a:hover { color: #2563eb; background: #f8fafc; border-left-color: #93c5fd; }
+  .toc a.sub { padding-left: 28px; font-size: 12px; color: #94a3b8; }
+  .toc a.sub:hover { color: #2563eb; }
+
+  /* Content */
+  .content { flex: 1; min-width: 0; }
+
+  /* Section */
+  .section { background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 24px; overflow: hidden; }
+  .section-header { padding: 18px 24px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; }
+  .section-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .section-header h2 { font-size: 16px; font-weight: 700; color: #0f172a; }
+  .section-header .sec-num { font-size: 12px; font-weight: 600; color: #94a3b8; background: #f1f5f9; border-radius: 4px; padding: 2px 7px; }
+  .section-body { padding: 24px; }
+
+  h3 { font-size: 14px; font-weight: 700; color: #0f172a; margin: 20px 0 10px; }
+  h3:first-child { margin-top: 0; }
+  p { font-size: 14px; color: #334155; margin-bottom: 12px; }
+  p:last-child { margin-bottom: 0; }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+  thead th { background: #f8fafc; color: #64748b; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; padding: 9px 12px; text-align: left; border-bottom: 2px solid #e2e8f0; }
+  tbody td { padding: 9px 12px; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: #f8fafc; }
+
+  /* Code */
+  code { font-family: 'SF Mono', 'Fira Code', Consolas, monospace; font-size: 12px; background: #f1f5f9; color: #0f172a; padding: 2px 5px; border-radius: 4px; }
+  pre { background: #0f172a; color: #e2e8f0; border-radius: 8px; padding: 16px 20px; overflow-x: auto; margin: 12px 0; }
+  pre code { background: none; color: inherit; padding: 0; font-size: 13px; }
+
+  /* Badge */
+  .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
+  .badge-blue  { background: #dbeafe; color: #1e40af; }
+  .badge-pink  { background: #fce7f3; color: #9d174d; }
+  .badge-green { background: #d1fae5; color: #065f46; }
+  .badge-yellow{ background: #fef3c7; color: #92400e; }
+  .badge-red   { background: #fee2e2; color: #991b1b; }
+
+  /* Steps */
+  .steps { list-style: none; counter-reset: step; }
+  .steps li { counter-increment: step; padding: 10px 12px 10px 44px; position: relative; border-left: 2px solid #e2e8f0; margin-left: 16px; margin-bottom: 4px; font-size: 14px; color: #334155; }
+  .steps li::before { content: counter(step); position: absolute; left: -14px; top: 10px; width: 26px; height: 26px; background: #2563eb; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+  .steps li:last-child { border-left-color: transparent; }
+
+  /* Note / Warning */
+  .note { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px 16px; font-size: 13px; color: #1e40af; margin: 12px 0; display: flex; gap: 8px; }
+  .warn { background: #fef9c3; border: 1px solid #fde68a; border-radius: 8px; padding: 12px 16px; font-size: 13px; color: #92400e; margin: 12px 0; display: flex; gap: 8px; }
+  .note-icon, .warn-icon { flex-shrink: 0; font-size: 15px; }
+
+  /* Screen mock */
+  .screen-mock { background: #0f172a; border-radius: 10px; padding: 16px 20px; margin: 12px 0; font-family: 'SF Mono', Consolas, monospace; font-size: 12px; color: #94a3b8; line-height: 1.8; overflow-x: auto; }
+  .screen-mock .hl { color: #3b82f6; }
+  .screen-mock .ok { color: #34d399; }
+  .screen-mock .hd { color: #f8fafc; font-weight: 700; }
+
+  /* Filter pill demo */
+  .pill-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin: 8px 0; }
+  .pill { display: inline-block; font-size: 12px; padding: 4px 12px; border-radius: 20px; border: 1px solid #e2e8f0; background: #fff; color: #475569; }
+  .pill.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+
+  /* Divider */
+  .divider { border: none; border-top: 1px solid #f1f5f9; margin: 20px 0; }
+
+  @media (max-width: 768px) { .container { flex-direction: column; } .toc { width: 100%; } .toc-inner { position: static; } }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="logo">PF</div>
+  <h1>PFS Console</h1>
+  <span class="badge">사용자 매뉴얼</span>
+  <a href="ops_manual.html" class="other-link">⚙ 운영자 매뉴얼 →</a>
+</header>
+
+<div class="container">
+
+  <!-- TOC -->
+  <nav class="toc">
+    <div class="toc-inner">
+      <div class="toc-title">목차</div>
+      <a href="#overview">1. 시스템 개요</a>
+      <a href="#login">2. 로그인 / 로그아웃</a>
+      <a href="#layout">3. 화면 구성</a>
+      <a href="#stats">4. 대시보드 통계</a>
+      <a href="#upload">5. Batch ZIP Upload</a>
+      <a href="#upload-files" class="sub">필수 파일 구성</a>
+      <a href="#upload-result" class="sub">결과 메시지 해석</a>
+      <a href="#history">6. 업로드 처리 이력</a>
+      <a href="#queue">7. Queue 레코드 조회</a>
+      <a href="#queue-filter" class="sub">필터 사용법</a>
+      <a href="#queue-cols" class="sub">컬럼 설명</a>
+      <a href="#preview">8. HTML 미리보기</a>
+      <a href="#delete">9. 큐 레코드 삭제</a>
+      <a href="#autorefresh">10. 자동 새로고침</a>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <main class="content">
+
+    <!-- 1. 개요 -->
+    <section class="section" id="overview">
+      <div class="section-header">
+        <div class="section-icon" style="background:#eff6ff">📋</div>
+        <h2>시스템 개요</h2>
+        <span class="sec-num">01</span>
+      </div>
+      <div class="section-body">
+        <p>PFS Console은 HSBC Korea 고객의 <strong>펀드 잔고 안내 이메일</strong>을 배치 처리하여 DB 발송 큐에 저장하고 관리하는 운영 화면입니다.</p>
+        <h3>처리 흐름</h3>
+        <div class="screen-mock">
+<span class="hd">배치 ZIP 업로드</span>
+    ↓
+<span class="hl">CSV 파일 6건 파싱</span> (KRHSBC × 3 + KRHRED × 3)
+    ↓
+<span class="hl">고객별 HTML 이메일 생성</span>
+    ↓
+<span class="ok">DB 발송 큐 INSERT</span> (SMTP_INFO / SMTP_RECV / SMTP_FILES)
+    ↓
+외부 발송 시스템이 큐를 읽어 발송
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. 로그인 -->
+    <section class="section" id="login">
+      <div class="section-header">
+        <div class="section-icon" style="background:#f0fdf4">🔐</div>
+        <h2>로그인 / 로그아웃</h2>
+        <span class="sec-num">02</span>
+      </div>
+      <div class="section-body">
+        <h3>로그인</h3>
+        <ol class="steps">
+          <li>브라우저에서 <code>http://&lt;서버&gt;:9080/pfs/</code> 접속</li>
+          <li>아이디 / 비밀번호 입력 후 로그인</li>
+        </ol>
+        <table style="margin-top:14px">
+          <thead><tr><th>항목</th><th>기본값</th><th>비고</th></tr></thead>
+          <tbody>
+            <tr><td>아이디</td><td><code>pfsadmin</code></td><td>환경변수 <code>PFS_APP_USER</code>로 변경 가능</td></tr>
+            <tr><td>비밀번호</td><td><code>pfs1234</code></td><td>환경변수 <code>PFS_APP_PASSWORD</code>로 변경 가능</td></tr>
+          </tbody>
+        </table>
+        <h3>로그아웃</h3>
+        <p>화면 우측 상단 <strong>[로그아웃]</strong> 버튼을 클릭합니다.</p>
+      </div>
+    </section>
+
+    <!-- 3. 화면 구성 -->
+    <section class="section" id="layout">
+      <div class="section-header">
+        <div class="section-icon" style="background:#fdf4ff">🖥</div>
+        <h2>화면 구성</h2>
+        <span class="sec-num">03</span>
+      </div>
+      <div class="section-body">
+        <div class="screen-mock">
+<span class="hd">┌──────────────────────────────────────────────────────────┐</span>
+<span class="hd">│</span> <span class="hl">PF  PFS Console</span>   <span class="ok">[DEV]</span>          pfsadmin  <span class="hl">[로그아웃]</span> <span class="hd">│</span>  ← 헤더
+<span class="hd">├─────────────┬─────────────┬─────────────┬─────────────────┤</span>
+<span class="hd">│</span>  <span class="hl">대기 중</span>     <span class="hd">│</span>  발송 완료  <span class="hd">│</span>  총 큐 건수 <span class="hd">│</span>  오늘 업로드   <span class="hd">│</span>  ← 통계
+<span class="hd">├─────────────┴─────────────┴─────────────┴─────────────────┤</span>
+<span class="hd">│</span>  📦 Batch ZIP Upload                                        <span class="hd">│</span>  ← 업로드
+<span class="hd">├─────────────────────────────────────────────────────────────┤</span>
+<span class="hd">│</span>  🕐 업로드 처리 이력                                         <span class="hd">│</span>  ← 이력
+<span class="hd">├─────────────────────────────────────────────────────────────┤</span>
+<span class="hd">│</span>  📬 Queue Recent Results          <span class="hl">[⟳ 자동 새로고침]</span>        <span class="hd">│</span>  ← 큐
+<span class="hd">│</span>  [ 검색 ] [ 날짜 범위 ] [검색] [초기화]                      <span class="hd">│</span>
+<span class="hd">│</span>  출처: 전체 / KRHSBC / KRHRED  │  상태: 전체 / 대기 / 완료  <span class="hd">│</span>
+<span class="hd">└─────────────────────────────────────────────────────────────┘</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. 통계 -->
+    <section class="section" id="stats">
+      <div class="section-header">
+        <div class="section-icon" style="background:#fef9c3">📊</div>
+        <h2>대시보드 통계</h2>
+        <span class="sec-num">04</span>
+      </div>
+      <div class="section-body">
+        <p>화면 상단 4개 카드가 DB 실시간 현황을 표시합니다.</p>
+        <table>
+          <thead><tr><th>카드</th><th>의미</th></tr></thead>
+          <tbody>
+            <tr><td><strong>대기 중</strong></td><td>발송 상태(<code>S_FLAG = N</code>)인 큐 건수</td></tr>
+            <tr><td><strong>발송 완료</strong></td><td>발송 상태(<code>S_FLAG = Y</code>)인 큐 건수</td></tr>
+            <tr><td><strong>총 큐 건수</strong></td><td>전체 큐 레코드 수</td></tr>
+            <tr><td><strong>오늘 업로드</strong></td><td>당일 업로드 처리 건수 (감사 로그 기준)</td></tr>
+          </tbody>
+        </table>
+        <div class="note"><span class="note-icon">ℹ</span> DB 연결 실패 시 모든 값이 <code>0</code>으로 표시되며 상단에 오류 배너가 나타납니다.</div>
+      </div>
+    </section>
+
+    <!-- 5. ZIP 업로드 -->
+    <section class="section" id="upload">
+      <div class="section-header">
+        <div class="section-icon" style="background:#eff6ff">📦</div>
+        <h2>Batch ZIP Upload</h2>
+        <span class="sec-num">05</span>
+      </div>
+      <div class="section-body">
+
+        <h3 id="upload-files">필수 파일 구성</h3>
+        <p>ZIP 파일 안에 아래 <strong>6개 CSV 파일</strong>이 반드시 포함되어야 합니다.</p>
+        <table>
+          <thead><tr><th>출처</th><th>파일 종류</th><th>파일명 패턴</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-blue">KRHSBC</span></td><td>고객 속성</td><td><code>*CustAttr*</code></td></tr>
+            <tr><td><span class="badge badge-blue">KRHSBC</span></td><td>고객 구독</td><td><code>*CustSubs*</code></td></tr>
+            <tr><td><span class="badge badge-blue">KRHSBC</span></td><td>이메일 고객 마스터</td><td><code>*EmailCustMast*</code></td></tr>
+            <tr><td><span class="badge badge-pink">KRHRED</span></td><td>고객 속성</td><td><code>*CustAttr*</code></td></tr>
+            <tr><td><span class="badge badge-pink">KRHRED</span></td><td>고객 구독</td><td><code>*CustSubs*</code></td></tr>
+            <tr><td><span class="badge badge-pink">KRHRED</span></td><td>이메일 고객 마스터</td><td><code>*EmailCustMast*</code></td></tr>
+          </tbody>
+        </table>
+
+        <hr class="divider">
+        <h3>업로드 절차</h3>
+        <ol class="steps">
+          <li><strong>[파일 선택]</strong> 클릭 → <code>.zip</code> 파일 선택</li>
+          <li><strong>[Upload &amp; Process]</strong> 버튼 클릭</li>
+          <li>처리 완료 후 상단에 결과 배너 확인</li>
+        </ol>
+        <div class="note" style="margin-top:14px"><span class="note-icon">ℹ</span> 업로드 완료 후 임시 배치 파일은 자동 삭제됩니다. HTML과 큐 데이터는 DB에만 보관됩니다.</div>
+
+        <hr class="divider">
+        <h3 id="upload-result">성공 결과 메시지 해석</h3>
+        <pre><code>ZIP 업로드/큐저장 완료. imported=6, reportDate=2024-01-15,
+queued(HSBC/HRED)=1250/430,
+verify(files/recv/info)=1680/1680/1680,
+smtpIdRange=1705123456000-1705123457000</code></pre>
+        <table>
+          <thead><tr><th>항목</th><th>의미</th></tr></thead>
+          <tbody>
+            <tr><td><code>imported</code></td><td>ZIP에서 추출된 파일 수</td></tr>
+            <tr><td><code>reportDate</code></td><td>배치 기준일</td></tr>
+            <tr><td><code>queued(HSBC/HRED)</code></td><td>큐에 저장된 KRHSBC / KRHRED 고객 수</td></tr>
+            <tr><td><code>verify(files/recv/info)</code></td><td>각 테이블 INSERT 확인 건수</td></tr>
+            <tr><td><code>smtpIdRange</code></td><td>생성된 SMTP_ID 범위</td></tr>
+          </tbody>
+        </table>
+
+        <hr class="divider">
+        <h3>제약 사항</h3>
+        <table>
+          <thead><tr><th>항목</th><th>제한</th></tr></thead>
+          <tbody>
+            <tr><td>최대 파일 크기</td><td>20MB (운영자가 변경 가능)</td></tr>
+            <tr><td>파일 형식</td><td>.zip 만 허용</td></tr>
+            <tr><td>필수 파일 수</td><td>6개 (부족 시 검증 오류)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 6. 업로드 이력 -->
+    <section class="section" id="history">
+      <div class="section-header">
+        <div class="section-icon" style="background:#f0fdf4">🕐</div>
+        <h2>업로드 처리 이력</h2>
+        <span class="sec-num">06</span>
+      </div>
+      <div class="section-body">
+        <p>최근 <strong>12건</strong>의 업로드 처리 결과를 테이블로 표시합니다.</p>
+        <table>
+          <thead><tr><th>컬럼</th><th>설명</th></tr></thead>
+          <tbody>
+            <tr><td><strong>처리 시각</strong></td><td>업로드 완료 시각 — 클릭 시 해당 배치의 큐 레코드만 필터링</td></tr>
+            <tr><td><strong>업로더</strong></td><td>처리를 요청한 로그인 계정명</td></tr>
+            <tr><td><strong>파일 수</strong></td><td>ZIP에서 추출된 파일 수</td></tr>
+            <tr><td><strong>큐 저장 (HSBC/HRED/합계)</strong></td><td>각 출처별 큐 저장 건수</td></tr>
+            <tr><td><strong>결과</strong></td><td><span class="badge badge-green">성공</span> / <span class="badge badge-red">실패</span></td></tr>
+            <tr><td><strong>메시지</strong></td><td>처리 결과 또는 오류 내용</td></tr>
+          </tbody>
+        </table>
+        <div class="note"><span class="note-icon">ℹ</span> <strong>처리 시각</strong>을 클릭하면 Queue 섹션에 해당 배치 시각 기준으로 필터가 자동 적용됩니다.</div>
+      </div>
+    </section>
+
+    <!-- 7. 큐 조회 -->
+    <section class="section" id="queue">
+      <div class="section-header">
+        <div class="section-icon" style="background:#fdf4ff">📬</div>
+        <h2>Queue 레코드 조회</h2>
+        <span class="sec-num">07</span>
+      </div>
+      <div class="section-body">
+
+        <h3 id="queue-filter">필터 사용법</h3>
+
+        <p><strong>키워드 검색</strong> — 고객번호(REF_NO) 또는 이메일 주소 부분 일치 검색 (대소문자 구분 없음)</p>
+        <p><strong>날짜 범위</strong> — 큐 생성 일자 기준 시작일 ~ 종료일 조회</p>
+
+        <p style="margin-top:14px"><strong>출처 필터</strong></p>
+        <div class="pill-row">
+          <span class="pill active">전체</span>
+          <span class="pill">KRHSBC</span>
+          <span class="pill">KRHRED</span>
+        </div>
+
+        <p style="margin-top:14px"><strong>발송 상태 필터</strong></p>
+        <div class="pill-row">
+          <span class="pill active">전체</span>
+          <span class="pill">대기</span>
+          <span class="pill">발송완료</span>
+        </div>
+
+        <p style="margin-top:14px"><strong>페이지당 표시 건수</strong> — 우측 드롭다운에서 10 / 20 / 50 / 100건 선택</p>
+
+        <hr class="divider">
+        <h3 id="queue-cols">테이블 컬럼 설명</h3>
+        <table>
+          <thead><tr><th>컬럼</th><th>설명</th></tr></thead>
+          <tbody>
+            <tr><td><strong>SMTP ID</strong></td><td>발송 큐 고유 식별자</td></tr>
+            <tr><td><strong>출처</strong></td><td><span class="badge badge-blue">KRHSBC</span> HSBC 고객 &nbsp; <span class="badge badge-pink">KRHRED</span> HRED 고객</td></tr>
+            <tr><td><strong>고객번호 (REF_NO)</strong></td><td>고객 식별 번호</td></tr>
+            <tr><td><strong>수신자</strong></td><td>수신자 이름 + 이메일 주소</td></tr>
+            <tr><td><strong>상태</strong></td><td><span class="badge badge-yellow">대기</span> 미발송 &nbsp; <span class="badge badge-green">발송완료</span></td></tr>
+            <tr><td><strong>펀드 수</strong></td><td>고객의 펀드 보유 건수</td></tr>
+            <tr><td><strong>HTML 크기</strong></td><td>이메일 HTML 파일 크기 (KB)</td></tr>
+            <tr><td><strong>생성 시각</strong></td><td>큐 INSERT 시각</td></tr>
+            <tr><td><strong>HTML</strong></td><td>[미리보기] 버튼 — 클릭 시 HTML 이메일 내용 팝업</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 8. 미리보기 -->
+    <section class="section" id="preview">
+      <div class="section-header">
+        <div class="section-icon" style="background:#fffbeb">👁</div>
+        <h2>HTML 이메일 미리보기</h2>
+        <span class="sec-num">08</span>
+      </div>
+      <div class="section-body">
+        <p>Queue 테이블에서 <strong>[미리보기]</strong> 버튼을 클릭하면 해당 고객에게 발송될 HTML 이메일 내용을 모달 팝업으로 확인할 수 있습니다.</p>
+        <table>
+          <thead><tr><th>동작</th><th>방법</th></tr></thead>
+          <tbody>
+            <tr><td>미리보기 열기</td><td>Queue 테이블 행의 <strong>[미리보기]</strong> 버튼 클릭</td></tr>
+            <tr><td>미리보기 닫기</td><td>우측 상단 <strong>[✕]</strong> 클릭 / 배경 클릭 / <kbd>ESC</kbd> 키</td></tr>
+          </tbody>
+        </table>
+        <div class="note"><span class="note-icon">ℹ</span> HTML 내용은 DB의 <code>EMGR_SMTP_FILES_Q</code> 테이블에서 직접 조회됩니다.</div>
+      </div>
+    </section>
+
+    <!-- 9. 삭제 -->
+    <section class="section" id="delete">
+      <div class="section-header">
+        <div class="section-icon" style="background:#fef2f2">🗑</div>
+        <h2>큐 레코드 삭제</h2>
+        <span class="sec-num">09</span>
+      </div>
+      <div class="section-body">
+        <div class="warn"><span class="warn-icon">⚠</span> <strong>삭제는 되돌릴 수 없습니다.</strong> 발송 대기 중인 레코드를 삭제하면 해당 고객에게 이메일이 발송되지 않습니다.</div>
+        <h3>삭제 절차</h3>
+        <ol class="steps">
+          <li>삭제할 행의 <strong>체크박스</strong> 선택 (헤더 체크박스로 전체 선택 가능)</li>
+          <li>상단에 노란색 삭제 바 표시 → 선택 건수 확인</li>
+          <li><strong>[선택 삭제]</strong> 버튼 클릭</li>
+          <li>확인 대화상자에서 <strong>[확인]</strong> 클릭</li>
+        </ol>
+        <div class="note" style="margin-top:14px"><span class="note-icon">ℹ</span> 삭제 시 <code>SMTP_INFO_Q</code>, <code>SMTP_RECV_LIST_Q</code>, <code>SMTP_FILES_Q</code> 3개 테이블에서 동시에 삭제됩니다.</div>
+      </div>
+    </section>
+
+    <!-- 10. 자동 새로고침 -->
+    <section class="section" id="autorefresh">
+      <div class="section-header">
+        <div class="section-icon" style="background:#f0fdf4">⟳</div>
+        <h2>자동 새로고침</h2>
+        <span class="sec-num">10</span>
+      </div>
+      <div class="section-body">
+        <p>Queue 섹션 우측 상단의 <strong>[⟳ 자동 새로고침]</strong> 버튼을 클릭하면 <strong>30초마다</strong> 페이지가 자동 갱신됩니다.</p>
+        <table>
+          <thead><tr><th>상태</th><th>버튼 표시</th></tr></thead>
+          <tbody>
+            <tr><td>비활성</td><td><code>⟳ 자동 새로고침</code></td></tr>
+            <tr><td>활성 (파란색)</td><td><code>⟳ ON (30s)</code></td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:12px">발송 시스템이 큐를 처리하는 동안 발송 상태 변화를 실시간으로 모니터링할 때 유용합니다.</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PFS Console - 운영자 매뉴얼</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #1e293b; line-height: 1.7; }
+
+  /* Header */
+  .site-header { background: #0f172a; color: #f8fafc; padding: 0 40px; height: 56px; display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,.3); }
+  .site-header .logo { width: 30px; height: 30px; background: #7c3aed; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; color: #fff; flex-shrink: 0; }
+  .site-header h1 { font-size: 15px; font-weight: 600; }
+  .site-header .badge { background: #2e1065; color: #c4b5fd; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; letter-spacing: .5px; }
+  .site-header .other-link { margin-left: auto; font-size: 12px; color: #94a3b8; text-decoration: none; border: 1px solid #334155; border-radius: 5px; padding: 4px 12px; transition: all .15s; }
+  .site-header .other-link:hover { border-color: #94a3b8; color: #f8fafc; }
+
+  .container { display: flex; max-width: 1200px; margin: 0 auto; padding: 36px 24px; gap: 32px; }
+
+  /* TOC */
+  .toc { width: 220px; flex-shrink: 0; }
+  .toc-inner { position: sticky; top: 72px; background: #fff; border-radius: 10px; border: 1px solid #e2e8f0; padding: 16px 0; }
+  .toc-title { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .8px; padding: 0 16px 10px; border-bottom: 1px solid #f1f5f9; margin-bottom: 8px; }
+  .toc a { display: block; font-size: 13px; color: #475569; text-decoration: none; padding: 5px 16px; border-left: 2px solid transparent; transition: all .12s; }
+  .toc a:hover { color: #7c3aed; background: #f8fafc; border-left-color: #c4b5fd; }
+  .toc a.sub { padding-left: 28px; font-size: 12px; color: #94a3b8; }
+  .toc a.sub:hover { color: #7c3aed; }
+
+  .content { flex: 1; min-width: 0; }
+
+  .section { background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 24px; overflow: hidden; }
+  .section-header { padding: 18px 24px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; }
+  .section-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .section-header h2 { font-size: 16px; font-weight: 700; color: #0f172a; }
+  .section-header .sec-num { font-size: 12px; font-weight: 600; color: #94a3b8; background: #f1f5f9; border-radius: 4px; padding: 2px 7px; }
+  .section-body { padding: 24px; }
+
+  h3 { font-size: 14px; font-weight: 700; color: #0f172a; margin: 20px 0 10px; }
+  h3:first-child { margin-top: 0; }
+  p { font-size: 14px; color: #334155; margin-bottom: 12px; }
+  p:last-child { margin-bottom: 0; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+  thead th { background: #f8fafc; color: #64748b; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; padding: 9px 12px; text-align: left; border-bottom: 2px solid #e2e8f0; }
+  tbody td { padding: 9px 12px; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: #f8fafc; }
+
+  code { font-family: 'SF Mono', 'Fira Code', Consolas, monospace; font-size: 12px; background: #f1f5f9; color: #0f172a; padding: 2px 5px; border-radius: 4px; }
+  pre { background: #0f172a; color: #e2e8f0; border-radius: 8px; padding: 16px 20px; overflow-x: auto; margin: 12px 0; }
+  pre code { background: none; color: inherit; padding: 0; font-size: 13px; }
+  pre .cm { color: #64748b; }
+  pre .kw { color: #93c5fd; }
+  pre .val { color: #86efac; }
+  pre .sec { color: #fde68a; font-weight: 700; }
+
+  .steps { list-style: none; counter-reset: step; }
+  .steps li { counter-increment: step; padding: 10px 12px 10px 44px; position: relative; border-left: 2px solid #e2e8f0; margin-left: 16px; margin-bottom: 4px; font-size: 14px; color: #334155; }
+  .steps li::before { content: counter(step); position: absolute; left: -14px; top: 10px; width: 26px; height: 26px; background: #7c3aed; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+  .steps li:last-child { border-left-color: transparent; }
+
+  .note { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px 16px; font-size: 13px; color: #1e40af; margin: 12px 0; display: flex; gap: 8px; }
+  .warn { background: #fef9c3; border: 1px solid #fde68a; border-radius: 8px; padding: 12px 16px; font-size: 13px; color: #92400e; margin: 12px 0; display: flex; gap: 8px; }
+  .danger { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; padding: 12px 16px; font-size: 13px; color: #991b1b; margin: 12px 0; display: flex; gap: 8px; }
+  .note-icon, .warn-icon, .danger-icon { flex-shrink: 0; font-size: 15px; }
+
+  .divider { border: none; border-top: 1px solid #f1f5f9; margin: 20px 0; }
+
+  .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
+  .badge-green { background: #d1fae5; color: #065f46; }
+  .badge-red   { background: #fee2e2; color: #991b1b; }
+  .badge-purple{ background: #ede9fe; color: #5b21b6; }
+
+  @media (max-width: 768px) { .container { flex-direction: column; } .toc { width: 100%; } .toc-inner { position: static; } }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="logo">⚙</div>
+  <h1>PFS Console</h1>
+  <span class="badge">운영자 매뉴얼</span>
+  <a href="user_manual.html" class="other-link">← 사용자 매뉴얼</a>
+</header>
+
+<div class="container">
+
+  <!-- TOC -->
+  <nav class="toc">
+    <div class="toc-inner">
+      <div class="toc-title">목차</div>
+      <a href="#requirements">1. 시스템 요구사항</a>
+      <a href="#structure">2. 파일 구조</a>
+      <a href="#build">3. 빌드</a>
+      <a href="#config">4. 환경 설정</a>
+      <a href="#config-props" class="sub">pfs-jdk.properties</a>
+      <a href="#config-password" class="sub">DB 비밀번호 암호화</a>
+      <a href="#config-login" class="sub">로그인 계정 변경</a>
+      <a href="#db">5. DB 초기화</a>
+      <a href="#deploy">6. WLP 배포</a>
+      <a href="#deploy-local" class="sub">로컬 기동</a>
+      <a href="#deploy-prod" class="sub">운영 배포</a>
+      <a href="#servercontrol">7. 서버 제어</a>
+      <a href="#logs">8. 로그</a>
+      <a href="#health">9. 헬스체크</a>
+      <a href="#troubleshoot">10. 오류 대응</a>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <main class="content">
+
+    <!-- 1. 요구사항 -->
+    <section class="section" id="requirements">
+      <div class="section-header">
+        <div class="section-icon" style="background:#ede9fe">🖥</div>
+        <h2>시스템 요구사항</h2>
+        <span class="sec-num">01</span>
+      </div>
+      <div class="section-body">
+        <table>
+          <thead><tr><th>항목</th><th>요구사항</th><th>비고</th></tr></thead>
+          <tbody>
+            <tr><td>Java</td><td>JDK 21 LTS 이상</td><td>JAVA_HOME 환경변수 설정 필요</td></tr>
+            <tr><td>WAS</td><td>Open Liberty 26.0.0.5 이상</td><td><code>C:\SELPRG\wlp</code> (기본 경로)</td></tr>
+            <tr><td>DB</td><td>PostgreSQL 14 이상</td><td>JDBC URL 필요</td></tr>
+            <tr><td>Maven</td><td>3.8 이상</td><td>빌드 및 로컬 기동용</td></tr>
+            <tr><td>메모리</td><td>512MB 이상 (Heap)</td><td>WLP JVM 옵션으로 조정</td></tr>
+          </tbody>
+        </table>
+        <h3>WLP 필수 피처</h3>
+        <pre><code><span class="sec">&lt;featureManager&gt;</span>
+    <span class="kw">&lt;feature&gt;</span><span class="val">servlet-6.0</span><span class="kw">&lt;/feature&gt;</span>
+<span class="sec">&lt;/featureManager&gt;</span></code></pre>
+      </div>
+    </section>
+
+    <!-- 2. 파일 구조 -->
+    <section class="section" id="structure">
+      <div class="section-header">
+        <div class="section-icon" style="background:#f0fdf4">📁</div>
+        <h2>파일 구조</h2>
+        <span class="sec-num">02</span>
+      </div>
+      <div class="section-body">
+        <h3>프로젝트 소스</h3>
+        <pre><code>SEL_EMGR_PORTSTATE_WAS/
+├── src/main/java/com/hsbc/sel/emgr/
+│   ├── PfsWebApplication.java        <span class="cm"># Spring Boot 진입점</span>
+│   ├── config/
+│   │   ├── PfsConfig.java            <span class="cm"># Bean 설정</span>
+│   │   ├── PfsProperties.java        <span class="cm"># 설정 로딩</span>
+│   │   └── SecurityConfig.java       <span class="cm"># 인증/인가</span>
+│   ├── service/
+│   │   ├── PfsEmailQueueService.java <span class="cm"># 큐 DB 처리</span>
+│   │   ├── PfsBatchService.java      <span class="cm"># CSV 파싱/검증</span>
+│   │   ├── PfsStorageService.java    <span class="cm"># 파일 I/O</span>
+│   │   └── PfsTemplateService.java   <span class="cm"># HTML 렌더링</span>
+│   └── web/
+│       └── PfsController.java        <span class="cm"># HTTP 엔드포인트</span>
+├── src/main/resources/
+│   ├── application.yml
+│   └── templates/pfs.html
+├── src/main/liberty/config/
+│   └── server.xml                    <span class="cm"># WLP 서버 설정</span>
+├── src/main/webapp/WEB-INF/
+│   ├── web.xml
+│   └── ibm-web-ext.xml               <span class="cm"># parentLast 클래스로더</span>
+└── pom.xml</code></pre>
+
+        <h3>런타임 파일 경로</h3>
+        <pre><code>&lt;pfs.baseDir&gt;/                 <span class="cm"># JVM 옵션 -Dpfs.baseDir 로 지정</span>
+├── pfs-jdk.properties         <span class="cm"># 운영 설정 파일</span>
+├── batch/                     <span class="cm"># ZIP 추출 임시 디렉토리 (자동 정리)</span>
+└── template/                  <span class="cm"># 이메일 HTML 템플릿</span>
+    └── email_content.txt</code></pre>
+        <div class="note"><span class="note-icon">ℹ</span> <code>pom.xml</code>의 <code>liberty-maven-plugin</code> 설정에서 <code>-Dpfs.baseDir=${project.basedir}/files</code>로 기본 경로가 지정되어 있습니다.</div>
+      </div>
+    </section>
+
+    <!-- 3. 빌드 -->
+    <section class="section" id="build">
+      <div class="section-header">
+        <div class="section-icon" style="background:#fffbeb">🔨</div>
+        <h2>빌드</h2>
+        <span class="sec-num">03</span>
+      </div>
+      <div class="section-body">
+        <pre><code><span class="cm"># WAR 파일 생성 (테스트 생략)</span>
+mvn clean package -DskipTests
+
+<span class="cm"># 결과물</span>
+target/portstate-was-1.0.0-SNAPSHOT.war</code></pre>
+
+        <h3>주요 의존성</h3>
+        <table>
+          <thead><tr><th>라이브러리</th><th>버전</th><th>역할</th></tr></thead>
+          <tbody>
+            <tr><td>Spring Boot</td><td>3.5.3</td><td>웹 프레임워크</td></tr>
+            <tr><td>Spring Security</td><td>6.x (Boot 관리)</td><td>인증/인가</td></tr>
+            <tr><td>Thymeleaf</td><td>3.x (Boot 관리)</td><td>HTML 템플릿 렌더링</td></tr>
+            <tr><td>Spring Retry</td><td>2.0.12</td><td>DB 읽기 자동 재시도</td></tr>
+            <tr><td>Spring Actuator</td><td>Boot 관리</td><td>헬스체크 엔드포인트</td></tr>
+            <tr><td>PostgreSQL JDBC</td><td>42.7.3</td><td>DB 드라이버</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 4. 환경 설정 -->
+    <section class="section" id="config">
+      <div class="section-header">
+        <div class="section-icon" style="background:#eff6ff">⚙</div>
+        <h2>환경 설정</h2>
+        <span class="sec-num">04</span>
+      </div>
+      <div class="section-body">
+
+        <h3 id="config-props">pfs-jdk.properties (운영 설정)</h3>
+        <p>파일 위치: <code>&lt;pfs.baseDir&gt;/pfs-jdk.properties</code></p>
+
+        <pre><code><span class="sec"># ── DB 연결 (필수) ──────────────────────────────</span>
+<span class="kw">db.queue.enabled</span>=<span class="val">true</span>
+<span class="kw">db.url</span>=<span class="val">jdbc:postgresql://&lt;호스트&gt;:5432/&lt;DB명&gt;</span>
+<span class="kw">db.user</span>=<span class="val">&lt;DB사용자&gt;</span>
+
+<span class="sec"># ── DB 비밀번호 (3가지 방식 중 택일) ───────────</span>
+<span class="cm"># 방식 1: 평문 (비권장, 개발용)</span>
+<span class="kw">db.password</span>=<span class="val">&lt;비밀번호&gt;</span>
+
+<span class="cm"># 방식 2: AES 암호화 + 환경변수 키</span>
+<span class="kw">db.password.enc</span>=<span class="val">&lt;암호화된비밀번호&gt;</span>
+<span class="kw">db.password.keyEnv</span>=<span class="val">PFS_DB_KEY</span>
+
+<span class="cm"># 방식 3: AES 암호화 + 키 파일</span>
+<span class="kw">db.password.enc</span>=<span class="val">&lt;암호화된비밀번호&gt;</span>
+<span class="kw">db.password.keyFile</span>=<span class="val">C:\keys\pfs.key</span>
+
+<span class="cm"># 방식 4: AES 암호화 + Windows Credential Manager</span>
+<span class="kw">db.password.enc</span>=<span class="val">&lt;암호화된비밀번호&gt;</span>
+<span class="kw">db.password.keyWinCred</span>=<span class="val">PFS_DB_CRED</span>
+
+<span class="sec"># ── 메일 발신 정보 ──────────────────────────────</span>
+<span class="kw">mail.appName</span>=<span class="val">eManager</span>
+<span class="kw">mail.sender</span>=<span class="val">HSBC Korea &lt;info@kr.hsbc.com&gt;</span>
+<span class="kw">mail.title</span>=<span class="val">HSBC 은행 펀드 잔고 안내</span>
+
+<span class="sec"># ── 운영 파라미터 (선택) ────────────────────────</span>
+<span class="kw">pfs.upload.zipMaxBytes</span>=<span class="val">20971520</span>       <span class="cm"># 최대 ZIP 크기 (기본 20MB)</span>
+<span class="kw">pfs.upload.historyRows</span>=<span class="val">12</span>             <span class="cm"># 이력 표시 건수</span>
+<span class="kw">pfs.queue.recentRows</span>=<span class="val">20</span>               <span class="cm"># 큐 기본 조회 건수</span>
+
+<span class="sec"># ── 테이블명 (기본값, 변경 시만 지정) ──────────</span>
+<span class="kw">db.queue.filesTable</span>=<span class="val">LOAN.EMGR_SMTP_FILES_Q</span>
+<span class="kw">db.queue.recvTable</span>=<span class="val">LOAN.EMGR_SMTP_RECV_LIST_Q</span>
+<span class="kw">db.queue.infoTable</span>=<span class="val">LOAN.EMGR_SMTP_INFO_Q</span>
+<span class="kw">db.audit.uploadTable</span>=<span class="val">LOAN.EMGR_UPLOAD_AUDIT</span></code></pre>
+
+        <hr class="divider">
+        <h3 id="config-password">DB 비밀번호 암호화</h3>
+        <p>운영 환경에서는 평문 비밀번호 대신 AES 암호화를 권장합니다.</p>
+        <ol class="steps">
+          <li>암호화 도구 실행: <code>java -cp portstate-was.war com.hsbc.sel.emgr.jdk.PfsPasswordCryptoTool</code></li>
+          <li>암호화 키와 DB 비밀번호 입력 → 암호화된 문자열 출력</li>
+          <li>출력된 값을 <code>db.password.enc</code>에 저장</li>
+          <li>키는 환경변수(<code>PFS_DB_KEY</code>), 키 파일, 또는 Windows Credential Manager 중 하나에 저장</li>
+        </ol>
+        <div class="note"><span class="note-icon">ℹ</span> 키 우선순위: 환경변수 → 키 파일 → Windows Credential Manager 순으로 조회합니다.</div>
+
+        <hr class="divider">
+        <h3 id="config-login">로그인 계정 변경</h3>
+        <p>운영 환경에서는 환경변수로 계정 정보를 관리하세요.</p>
+        <pre><code><span class="cm"># Windows 환경변수 또는 WLP jvm.options</span>
+<span class="kw">PFS_APP_USER</span>=<span class="val">pfsadmin</span>
+<span class="kw">PFS_APP_PASSWORD</span>=<span class="val">&lt;강한비밀번호&gt;</span></code></pre>
+        <p>또는 <code>application.yml</code>에서 직접 지정 (재배포 필요):</p>
+        <pre><code><span class="kw">app</span>:
+  <span class="kw">security</span>:
+    <span class="kw">username</span>: <span class="val">pfsadmin</span>
+    <span class="kw">password</span>: <span class="val">변경할비밀번호</span></code></pre>
+      </div>
+    </section>
+
+    <!-- 5. DB 초기화 -->
+    <section class="section" id="db">
+      <div class="section-header">
+        <div class="section-icon" style="background:#f0fdf4">🗄</div>
+        <h2>DB 초기화</h2>
+        <span class="sec-num">05</span>
+      </div>
+      <div class="section-body">
+        <p>최초 배포 시 PostgreSQL에 아래 테이블을 생성해야 합니다.</p>
+        <pre><code><span class="cm">-- 발송 정보 테이블</span>
+CREATE TABLE LOAN.EMGR_SMTP_INFO_Q (
+    SMTP_ID     NUMERIC(20)  NOT NULL,
+    APP_NAME    VARCHAR(20),
+    REF_NO      VARCHAR(50),
+    SENDER      VARCHAR(255),
+    TITLE       VARCHAR(255),
+    CONTENT     VARCHAR(3000),
+    C_TIME      TIMESTAMP,
+    S_CNT       INTEGER      DEFAULT 0,
+    S_FLAG      VARCHAR(1)   DEFAULT 'N',
+    SOURCE_APP  VARCHAR(10),
+    FUND_COUNT  INTEGER,
+    PRIMARY KEY (SMTP_ID, APP_NAME)
+);
+
+<span class="cm">-- 수신자 목록 테이블</span>
+CREATE TABLE LOAN.EMGR_SMTP_RECV_LIST_Q (
+    SMTP_ID       NUMERIC(20)  NOT NULL,
+    APP_NAME      VARCHAR(20),
+    RECEIVER      VARCHAR(255),
+    RECEIVER_NAME VARCHAR(100),
+    PRIMARY KEY (SMTP_ID, APP_NAME)
+);
+
+<span class="cm">-- HTML 파일 테이블</span>
+CREATE TABLE LOAN.EMGR_SMTP_FILES_Q (
+    SMTP_ID  NUMERIC(20)  NOT NULL,
+    APP_NAME VARCHAR(20),
+    NAME     VARCHAR(255),
+    DATAFILE BYTEA,
+    PRIMARY KEY (SMTP_ID, APP_NAME)
+);
+
+<span class="cm">-- 업로드 감사 로그 테이블</span>
+CREATE TABLE LOAN.EMGR_UPLOAD_AUDIT (
+    AUDIT_ID       NUMERIC(20)   NOT NULL PRIMARY KEY,
+    EVENT_TIME     TIMESTAMP,
+    IMPORTED_COUNT INTEGER,
+    HSBC_QUEUED    INTEGER,
+    HRED_QUEUED    INTEGER,
+    SUCCESS_FLAG   VARCHAR(1),
+    MESSAGE        VARCHAR(1000),
+    UPLOAD_USER    VARCHAR(100)
+);</code></pre>
+        <div class="warn"><span class="warn-icon">⚠</span> 테이블명은 <code>pfs-jdk.properties</code>에서 변경 가능합니다. 변경 시 DDL과 설정 파일을 동시에 수정하세요.</div>
+      </div>
+    </section>
+
+    <!-- 6. WLP 배포 -->
+    <section class="section" id="deploy">
+      <div class="section-header">
+        <div class="section-icon" style="background:#fdf4ff">🚀</div>
+        <h2>WLP 배포</h2>
+        <span class="sec-num">06</span>
+      </div>
+      <div class="section-body">
+
+        <h3 id="deploy-local">로컬 기동 (개발/테스트)</h3>
+        <pre><code><span class="cm"># 빌드 + WLP 기동 (포트 9080)</span>
+mvn liberty:run
+
+<span class="cm"># 접속 확인</span>
+http://localhost:9080/pfs/</code></pre>
+
+        <hr class="divider">
+        <h3 id="deploy-prod">운영 서버 배포</h3>
+        <ol class="steps">
+          <li>WAR 빌드: <code>mvn clean package -DskipTests</code></li>
+          <li>WAR 파일 복사: <code>target/portstate-was-1.0.0-SNAPSHOT.war</code> → <code>%WLP_HOME%\usr\servers\pfsServer\apps\</code></li>
+          <li><code>pfs-jdk.properties</code>를 <code>&lt;pfs.baseDir&gt;/</code> 에 배치</li>
+          <li>서버 기동: <code>%WLP_HOME%\bin\server.bat start pfsServer</code></li>
+        </ol>
+
+        <h3>server.xml 핵심 설정</h3>
+        <pre><code><span class="sec">&lt;server description="PFS Portfolio Statement WLP Server"&gt;</span>
+
+    <span class="kw">&lt;featureManager&gt;</span>
+        <span class="val">&lt;feature&gt;servlet-6.0&lt;/feature&gt;</span>
+    <span class="kw">&lt;/featureManager&gt;</span>
+
+    <span class="kw">&lt;httpEndpoint id="defaultHttpEndpoint"</span>
+                  <span class="kw">host="*"</span>
+                  <span class="kw">httpPort="9080"</span>
+                  <span class="kw">httpsPort="9443"/&gt;</span>
+
+    <span class="kw">&lt;webApplication id="portstate-was"</span>
+                    <span class="kw">location="portstate-was-1.0.0-SNAPSHOT.war"</span>
+                    <span class="kw">contextRoot="/pfs"&gt;</span>
+        <span class="cm">&lt;!-- Spring Boot 클래스가 WLP 내장 클래스보다 우선 로드 --&gt;</span>
+        <span class="val">&lt;classloader delegation="parentLast"/&gt;</span>
+    <span class="kw">&lt;/webApplication&gt;</span>
+
+<span class="sec">&lt;/server&gt;</span></code></pre>
+
+        <div class="warn"><span class="warn-icon">⚠</span> <code>classloader delegation="parentLast"</code> 설정은 필수입니다. 이 설정이 없으면 Spring Boot 클래스와 WLP 내장 클래스 충돌이 발생합니다.</div>
+
+        <h3>JVM 옵션 설정 (jvm.options)</h3>
+        <pre><code><span class="cm"># %WLP_HOME%\usr\servers\pfsServer\jvm.options</span>
+<span class="kw">-Dpfs.baseDir</span>=<span class="val">C:\pfs\files</span>
+<span class="kw">-Xmx512m</span>
+<span class="kw">-Xms256m</span></code></pre>
+      </div>
+    </section>
+
+    <!-- 7. 서버 제어 -->
+    <section class="section" id="servercontrol">
+      <div class="section-header">
+        <div class="section-icon" style="background:#fef9c3">🎛</div>
+        <h2>서버 제어</h2>
+        <span class="sec-num">07</span>
+      </div>
+      <div class="section-body">
+        <table>
+          <thead><tr><th>작업</th><th>명령</th></tr></thead>
+          <tbody>
+            <tr><td>기동</td><td><code>C:\SELPRG\wlp\bin\server.bat start pfsServer</code></td></tr>
+            <tr><td>중지</td><td><code>C:\SELPRG\wlp\bin\server.bat stop pfsServer</code></td></tr>
+            <tr><td>상태 확인</td><td><code>C:\SELPRG\wlp\bin\server.bat status pfsServer</code></td></tr>
+            <tr><td>로컬 기동 (Maven)</td><td><code>mvn liberty:run</code></td></tr>
+            <tr><td>로컬 중지 (Maven)</td><td><code>mvn liberty:stop</code></td></tr>
+          </tbody>
+        </table>
+        <h3>재배포 (무중단)</h3>
+        <p>WLP는 <code>apps/</code> 디렉토리의 WAR 파일을 교체하면 자동으로 재배포됩니다.</p>
+        <ol class="steps">
+          <li>새 WAR 파일 빌드</li>
+          <li><code>apps/</code> 폴더의 기존 WAR 파일을 새 파일로 교체</li>
+          <li>WLP가 변경을 감지하여 자동 재배포 (서버 재시작 불필요)</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- 8. 로그 -->
+    <section class="section" id="logs">
+      <div class="section-header">
+        <div class="section-icon" style="background:#f0fdf4">📄</div>
+        <h2>로그</h2>
+        <span class="sec-num">08</span>
+      </div>
+      <div class="section-body">
+        <table>
+          <thead><tr><th>로그 파일</th><th>내용</th></tr></thead>
+          <tbody>
+            <tr><td><code>logs\messages.log</code></td><td>WLP 서버 메시지, 애플리케이션 기동/중지, 오류</td></tr>
+            <tr><td><code>logs\console.log</code></td><td>stdout/stderr 출력 (System.out.println 포함)</td></tr>
+            <tr><td><code>logs\ffdc\</code></td><td>First Failure Data Capture — 상세 예외 스택</td></tr>
+          </tbody>
+        </table>
+        <p>로그 기본 경로: <code>C:\SELPRG\wlp\usr\servers\pfsServer\logs\</code></p>
+
+        <h3>주요 로그 메시지</h3>
+        <table>
+          <thead><tr><th>메시지 코드</th><th>의미</th></tr></thead>
+          <tbody>
+            <tr><td><code>CWWKF0011I</code></td><td>서버 준비 완료 (모든 피처 로드됨)</td></tr>
+            <tr><td><code>CWWKZ0001I</code></td><td>애플리케이션 기동 완료</td></tr>
+            <tr><td><code>CWWKZ0009E</code></td><td>애플리케이션 기동 실패</td></tr>
+            <tr><td><code>CWWKE0002E</code></td><td>서버 기동 실패</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 9. 헬스체크 -->
+    <section class="section" id="health">
+      <div class="section-header">
+        <div class="section-icon" style="background:#f0fdf4">💚</div>
+        <h2>헬스체크</h2>
+        <span class="sec-num">09</span>
+      </div>
+      <div class="section-body">
+        <p>인증 없이 접근 가능한 Actuator 엔드포인트입니다.</p>
+        <table>
+          <thead><tr><th>URL</th><th>설명</th></tr></thead>
+          <tbody>
+            <tr><td><code>/pfs/actuator/health</code></td><td>서버 전체 헬스 상태 (<span class="badge badge-green">UP</span> / <span class="badge badge-red">DOWN</span>)</td></tr>
+            <tr><td><code>/pfs/actuator/info</code></td><td>애플리케이션 정보</td></tr>
+            <tr><td><code>/pfs/actuator/metrics</code></td><td>JVM 메모리, GC, HTTP 요청 통계</td></tr>
+          </tbody>
+        </table>
+        <pre><code><span class="cm"># 헬스 확인 예시</span>
+curl http://localhost:9080/pfs/actuator/health
+
+<span class="cm"># 응답</span>
+{
+  "status": "UP",
+  "components": {
+    "diskSpace": { "status": "UP", "details": { "free": 18442027008 } },
+    "ping":      { "status": "UP" }
+  }
+}</code></pre>
+        <div class="note"><span class="note-icon">ℹ</span> 로드밸런서나 모니터링 도구(Zabbix, Prometheus 등)에서 이 엔드포인트를 헬스체크 URL로 설정하세요.</div>
+      </div>
+    </section>
+
+    <!-- 10. 오류 대응 -->
+    <section class="section" id="troubleshoot">
+      <div class="section-header">
+        <div class="section-icon" style="background:#fef2f2">🔧</div>
+        <h2>오류 대응</h2>
+        <span class="sec-num">10</span>
+      </div>
+      <div class="section-body">
+        <h3>화면 오류 배너 유형</h3>
+        <table>
+          <thead><tr><th>오류 메시지</th><th>원인</th><th>조치</th></tr></thead>
+          <tbody>
+            <tr><td><code>DB 연결 실패</code></td><td>PostgreSQL 연결 불가</td><td><code>db.url</code>, <code>db.user</code>, 비밀번호 및 DB 서버 상태 확인</td></tr>
+            <tr><td><code>DB queue is disabled</code></td><td><code>db.queue.enabled=false</code></td><td><code>pfs-jdk.properties</code>에서 <code>true</code>로 변경</td></tr>
+            <tr><td><code>ZIP 업로드 후 검증 실패</code></td><td>필수 파일 6건 미충족</td><td>ZIP 내 파일 구성 확인 (KRHSBC/KRHRED × 3)</td></tr>
+            <tr><td><code>ZIP 파일 크기 초과</code></td><td>20MB 초과</td><td>ZIP 최적화 또는 <code>pfs.upload.zipMaxBytes</code> 증가</td></tr>
+            <tr><td><code>DB driver loading failed</code></td><td>PostgreSQL JDBC 드라이버 누락</td><td>WAR 내 <code>postgresql-42.7.3.jar</code> 포함 확인</td></tr>
+            <tr><td><code>No key source configured</code></td><td>암호화 키 미설정</td><td>환경변수 <code>PFS_DB_KEY</code> 또는 <code>db.password.keyFile</code> 설정</td></tr>
+          </tbody>
+        </table>
+
+        <hr class="divider">
+        <h3>서버가 기동되지 않을 때</h3>
+        <ol class="steps">
+          <li><code>logs\messages.log</code>에서 <code>CWWKZ0009E</code> 또는 <code>CWWKE0002E</code> 메시지 확인</li>
+          <li><code>logs\ffdc\</code> 폴더에서 상세 스택 트레이스 확인</li>
+          <li><code>server.xml</code>의 <code>classloader delegation="parentLast"</code> 설정 확인</li>
+          <li><code>pfs-jdk.properties</code> 파일 경로 및 문법 오류 확인</li>
+        </ol>
+
+        <hr class="divider">
+        <h3>DB 연결 재시도 동작</h3>
+        <p>읽기 전용 DB 조회 메서드에 Spring Retry가 적용되어 있습니다.</p>
+        <table>
+          <thead><tr><th>설정</th><th>값</th></tr></thead>
+          <tbody>
+            <tr><td>최대 재시도 횟수</td><td>3회</td></tr>
+            <tr><td>초기 대기 시간</td><td>1초</td></tr>
+            <tr><td>백오프 배수</td><td>2배 (1초 → 2초 → 4초)</td></tr>
+            <tr><td>적용 대상</td><td>큐 조회, 건수 조회, 통계, 업로드 이력 조회</td></tr>
+          </tbody>
+        </table>
+        <div class="note"><span class="note-icon">ℹ</span> 쓰기 작업(ZIP 업로드, 큐 삭제)은 중복 데이터 방지를 위해 재시도가 적용되지 않습니다.</div>
+
+        <hr class="divider">
+        <h3>포트 충돌</h3>
+        <p>9080 포트가 사용 중일 경우 <code>server.xml</code>에서 변경합니다.</p>
+        <pre><code><span class="kw">&lt;httpEndpoint</span> httpPort=<span class="val">"9081"</span> httpsPort=<span class="val">"9444"</span><span class="kw">/&gt;</span></code></pre>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+</body>
+</html>
