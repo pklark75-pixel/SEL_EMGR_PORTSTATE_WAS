@@ -3,6 +3,13 @@
 HSBC Korea 펀드 잔고 안내 이메일 자동화 시스템 — **WAS / WLP WAR 배포 버전**.  
 [SEL_EMGR_PORTSTATE](https://github.com/pklark75-pixel/SEL_EMGR_PORTSTATE)(Spring Boot 내장 Tomcat)를 WebSphere Application Server(WAS Traditional) 및 WebSphere Liberty Profile(WLP)에 배포할 수 있도록 WAR 패키징으로 전환한 프로젝트입니다.
 
+## 매뉴얼
+
+| 문서 | 대상 | 내용 |
+|---|---|---|
+| [사용자 매뉴얼](docs/user_manual.html) | 화면 사용자 | 로그인, ZIP 업로드, 큐 조회/필터/삭제, HTML 미리보기 |
+| [운영자 매뉴얼](docs/ops_manual.html) | 운영/인프라 담당자 | 빌드, 환경 설정, DB 초기화, WLP 배포, 서버 제어, 오류 대응 |
+
 ## 원본 프로젝트와의 차이점
 
 | 항목 | SEL_EMGR_PORTSTATE (원본) | SEL_EMGR_PORTSTATE_WAS (이 프로젝트) |
