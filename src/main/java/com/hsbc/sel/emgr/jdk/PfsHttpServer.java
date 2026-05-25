@@ -53,6 +53,11 @@ public final class PfsHttpServer {
         hikariConfig.setMaximumPoolSize(2);
         hikariConfig.setPoolName("pfs-http");
         HikariDataSource dataSource = new HikariDataSource(hikariConfig);
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            dataSource.close();
+            log.info("HikariDataSource closed on shutdown");
+        }, "pfs-hikari-shutdown"));
+
         PfsEmailQueueService queueService = new PfsEmailQueueService(properties, batchService, templateService, dataSource);
 
         PfsHttpServer app = new PfsHttpServer(properties, storageService, batchService, queueService);

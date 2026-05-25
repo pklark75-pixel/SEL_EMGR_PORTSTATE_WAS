@@ -45,6 +45,10 @@
             border-radius: 4px;
             letter-spacing: .5px;
         }
+        .app-header .env-badge.env-prd {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
         .app-header .user-info {
             font-size: 12px;
             color: #94a3b8;
@@ -405,7 +409,9 @@
 <header class="app-header">
     <div class="logo">PF</div>
     <h1>PFS Console</h1>
-    <span class="env-badge" th:text="${appEnv}">DEV</span>
+    <span class="env-badge"
+          th:text="${appEnv}"
+          th:classappend="${appEnv == 'PRD'} ? ' env-prd'">DEV</span>
     <div class="user-info">
         <a th:href="@{/docs/user_manual.html}" target="_blank" class="btn-manual">📖 매뉴얼</a>
         <span sec:authentication="name"></span>

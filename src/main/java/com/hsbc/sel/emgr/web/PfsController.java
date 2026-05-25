@@ -56,6 +56,11 @@ public class PfsController {
         return "redirect:/pfs";
     }
 
+    @GetMapping("/login")
+    public String login() {
+        return "login";
+    }
+
     @GetMapping("/pfs")
     public String home(@RequestParam(value = "filterTime", required = false) String filterTime,
                        @RequestParam(value = "appFilter",  required = false) String appFilter,
