@@ -11,7 +11,7 @@ spring:
     exclude:
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
   thymeleaf:
-    cache: false
+    cache: true
   servlet:
     multipart:
       max-file-size: 20MB

@@ -200,6 +200,7 @@ public class PfsController {
         if (bytes == null) return ResponseEntity.notFound().build();
         return ResponseEntity.ok()
             .header("Content-Type", "text/html; charset=UTF-8")
+            .header("Content-Security-Policy", "sandbox allow-forms")
             .body(bytes);
     }
 
