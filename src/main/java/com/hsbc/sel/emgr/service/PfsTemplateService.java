@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.hsbc.sel.emgr.config.PfsProperties;
 import com.hsbc.sel.emgr.model.Customer;
@@ -15,6 +16,7 @@ public class PfsTemplateService {
 
     private final PfsProperties properties;
     private final Map<String, String[]> currencyMarker = new HashMap<String, String[]>();
+    private final ConcurrentHashMap<String, String> templateCache = new ConcurrentHashMap<>();
 
     public PfsTemplateService(PfsProperties properties) {
         this.properties = properties;
@@ -70,12 +72,14 @@ public class PfsTemplateService {
     }
 
     private String readTemplate(String fileName) {
-        Path path = properties.getTemplateDirPath().resolve(fileName);
-        try {
-            return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
-        } catch (IOException ex) {
-            throw new IllegalStateException("Template read failed: " + path, ex);
-        }
+        return templateCache.computeIfAbsent(fileName, key -> {
+            Path path = properties.getTemplateDirPath().resolve(key);
+            try {
+                return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+            } catch (IOException ex) {
+                throw new IllegalStateException("Template read failed: " + path, ex);
+            }
+        });
     }
 
     private String safe(String value) {

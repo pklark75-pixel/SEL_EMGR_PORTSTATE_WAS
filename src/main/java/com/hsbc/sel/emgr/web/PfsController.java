@@ -203,6 +203,9 @@ public class PfsController {
     public ResponseEntity<byte[]> htmlFile(@RequestParam("id") long id,
                                             @RequestParam("app") String app,
                                             @RequestParam("name") String name) {
+        if (name == null || !name.endsWith(".html") || name.contains("/") || name.contains("\\") || name.contains("..")) {
+            return ResponseEntity.badRequest().build();
+        }
         byte[] bytes = queueService.getHtmlFileBytes(id, app, name);
         if (bytes == null) return ResponseEntity.notFound().build();
         return ResponseEntity.ok()

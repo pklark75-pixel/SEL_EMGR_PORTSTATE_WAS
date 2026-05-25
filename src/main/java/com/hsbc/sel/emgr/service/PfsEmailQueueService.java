@@ -168,7 +168,6 @@ public class PfsEmailQueueService {
 
     // ── 대시보드 통계 ─────────────────────────────────────────────────────────
 
-    @Transactional(readOnly = true)
     @Retryable(retryFor = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2))
     public DashboardStats getSummaryStats() {
         DashboardStats stats = new DashboardStats();
@@ -349,7 +348,6 @@ public class PfsEmailQueueService {
         }
     }
 
-    @Transactional(readOnly = true)
     @Retryable(retryFor = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2))
     public List<UploadHistoryRecord> getRecentUploadHistories(int limit) {
         int safeLimit = limit <= 0 ? 12 : Math.min(limit, 200);

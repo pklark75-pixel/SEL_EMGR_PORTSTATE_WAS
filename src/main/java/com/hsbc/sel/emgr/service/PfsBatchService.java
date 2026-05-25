@@ -16,7 +16,6 @@ import com.hsbc.sel.emgr.model.BatchValidationResult;
 import com.hsbc.sel.emgr.model.Customer;
 import com.hsbc.sel.emgr.model.EmailCustomerRecord;
 import com.hsbc.sel.emgr.model.PortfolioStatement;
-import com.hsbc.sel.emgr.model.ProcessSummary;
 
 public class PfsBatchService {
 
@@ -80,37 +79,6 @@ public class PfsBatchService {
         result.setReportDate(reportDate);
         result.setValid(result.getErrors().isEmpty());
         return result;
-    }
-
-    public ProcessSummary processBatchFiles() {
-        BatchValidationResult validation = validateBatchFiles();
-        if (!validation.isValid()) {
-            throw new IllegalArgumentException(String.join("; ", validation.getErrors()));
-        }
-
-        storageService.clearDirectory(properties.getHsbcHtmlDirPath());
-        storageService.clearDirectory(properties.getHredHtmlDirPath());
-
-        ProcessSummary summary = new ProcessSummary();
-        summary.setReportDate(validation.getReportDate());
-
-        List<Customer> hsbcCustomers = parseCustomers(
-            validation.getMatchedFiles().get("KRHSBCEmailCustMast"),
-            validation.getMatchedFiles().get("KRHSBCCustAttr"),
-            false
-        );
-        writeHtmlFiles(hsbcCustomers, properties.getHsbcHtmlDirPath(), false);
-        summary.setHsbcHtmlCount(hsbcCustomers.size());
-
-        List<Customer> hredCustomers = parseCustomers(
-            validation.getMatchedFiles().get("KRHREDEmailCustMast"),
-            validation.getMatchedFiles().get("KRHREDCustAttr"),
-            true
-        );
-        writeHtmlFiles(hredCustomers, properties.getHredHtmlDirPath(), true);
-        summary.setHredHtmlCount(hredCustomers.size());
-
-        return summary;
     }
 
     public List<Customer> loadCustomers(BatchValidationResult validation, boolean isDbk) {
@@ -237,19 +205,6 @@ public class PfsBatchService {
             } else if (attrName.startsWith(header + "_Fund_Currency_")) {
                 current.setCurrency(attrValue);
                 customer.addStatement(current);
-            }
-        }
-    }
-
-    private void writeHtmlFiles(List<Customer> customers, Path outputDir, boolean isDbk) {
-        for (Customer customer : customers) {
-            String html = templateService.renderHtml(customer, isDbk);
-            customer.setHtmlContent(html);
-            Path outputFile = outputDir.resolve(customer.getCustNo() + ".html");
-            try {
-                Files.write(outputFile, html.getBytes(StandardCharsets.UTF_8));
-            } catch (IOException ex) {
-                throw new IllegalStateException("Failed to write html file: " + outputFile, ex);
             }
         }
     }
