@@ -77,6 +77,16 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
+        <!-- Spring Retry: DB 연결 실패 시 자동 재시도 (금융권 안정성) -->
+        <dependency>
+            <groupId>org.springframework.retry</groupId>
+            <artifactId>spring-retry</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+
         <!-- PostgreSQL 드라이버는 WAR 내부에 포함 -->
         <dependency>
             <groupId>org.postgresql</groupId>

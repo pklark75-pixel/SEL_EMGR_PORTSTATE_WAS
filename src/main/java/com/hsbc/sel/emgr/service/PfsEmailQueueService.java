@@ -14,9 +14,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.hsbc.sel.emgr.config.PfsProperties;
 import com.hsbc.sel.emgr.model.BatchValidationResult;
+import com.hsbc.sel.emgr.model.DashboardStats;
 import com.hsbc.sel.emgr.model.QueueRecord;
 import com.hsbc.sel.emgr.model.QueueSummary;
 import com.hsbc.sel.emgr.model.UploadHistoryRecord;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 
 public class PfsEmailQueueService {
 
@@ -94,10 +97,11 @@ public class PfsEmailQueueService {
 
     // ── 큐 레코드 조회 (페이징 + 필터 통합) ─────────────────────────────────
 
-    public List<QueueRecord> getQueueRecords(String filterTime, String appFilter, int page, int pageSize) {
+    @Retryable(retryFor = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2))
+    public List<QueueRecord> getQueueRecords(String filterTime, String appFilter, String sendFlag, String keyword, String dateFrom, String dateTo, int page, int pageSize) {
         loadDriver();
 
-        String where = buildWhere(filterTime, appFilter);
+        String where = buildWhere(filterTime, appFilter, sendFlag, keyword, dateFrom, dateTo);
         int offset = Math.max(page, 0) * pageSize;
 
         String sql = "SELECT I.SMTP_ID, I.APP_NAME, I.SOURCE_APP, I.REF_NO, R.RECEIVER, R.RECEIVER_NAME, I.S_FLAG, I.C_TIME, I.FUND_COUNT,"
@@ -114,7 +118,7 @@ public class PfsEmailQueueService {
         List<QueueRecord> rows = new ArrayList<QueueRecord>();
         try (Connection conn = openConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            bindParams(ps, filterTime, appFilter);
+            bindParams(ps, filterTime, appFilter, sendFlag, keyword, dateFrom, dateTo);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     QueueRecord r = new QueueRecord();
@@ -138,15 +142,19 @@ public class PfsEmailQueueService {
         }
     }
 
-    public int countQueueRecords(String filterTime, String appFilter) {
+    @Retryable(retryFor = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2))
+    public int countQueueRecords(String filterTime, String appFilter, String sendFlag, String keyword, String dateFrom, String dateTo) {
         loadDriver();
 
-        String where = buildWhere(filterTime, appFilter);
-        String sql = "SELECT COUNT(*) FROM " + properties.getQueueInfoTable() + " I " + where;
+        String where = buildWhere(filterTime, appFilter, sendFlag, keyword, dateFrom, dateTo);
+        String sql = "SELECT COUNT(*) FROM " + properties.getQueueInfoTable() + " I"
+            + " LEFT JOIN " + properties.getQueueRecvTable() + " R"
+            + " ON I.SMTP_ID = R.SMTP_ID AND I.APP_NAME = R.APP_NAME "
+            + where;
 
         try (Connection conn = openConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            bindParams(ps, filterTime, appFilter);
+            bindParams(ps, filterTime, appFilter, sendFlag, keyword, dateFrom, dateTo);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? rs.getInt(1) : 0;
             }
@@ -155,9 +163,61 @@ public class PfsEmailQueueService {
         }
     }
 
+    // ── 대시보드 통계 ─────────────────────────────────────────────────────────
+
+    @Retryable(retryFor = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2))
+    public DashboardStats getSummaryStats() {
+        loadDriver();
+        DashboardStats stats = new DashboardStats();
+        String qSql = "SELECT COUNT(*) FILTER (WHERE S_FLAG = 'N') AS p,"
+            + " COUNT(*) FILTER (WHERE S_FLAG = 'Y') AS s, COUNT(*) AS t"
+            + " FROM " + properties.getQueueInfoTable();
+        String aSql = "SELECT COUNT(*) FROM " + properties.getUploadAuditTable()
+            + " WHERE DATE(EVENT_TIME) = CURRENT_DATE";
+        try (Connection conn = openConnection()) {
+            try (PreparedStatement ps = conn.prepareStatement(qSql);
+                 ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    stats.setPendingCount(rs.getInt("p"));
+                    stats.setSentCount(rs.getInt("s"));
+                    stats.setTotalQueueCount(rs.getInt("t"));
+                }
+            }
+            try (PreparedStatement ps = conn.prepareStatement(aSql);
+                 ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) stats.setTodayUploadCount(rs.getInt(1));
+            }
+        } catch (Exception ex) { /* DB 오류 시 0으로 반환 */ }
+        return stats;
+    }
+
+    // ── 큐 레코드 삭제 ───────────────────────────────────────────────────────
+
+    public void deleteQueueRecord(long smtpId, String appName) {
+        loadDriver();
+        Connection conn = null;
+        try {
+            conn = openConnection();
+            conn.setAutoCommit(false);
+            for (String tbl : new String[]{properties.getQueueFilesTable(), properties.getQueueRecvTable(), properties.getQueueInfoTable()}) {
+                try (PreparedStatement ps = conn.prepareStatement("DELETE FROM " + tbl + " WHERE SMTP_ID = ? AND APP_NAME = ?")) {
+                    ps.setLong(1, smtpId);
+                    ps.setString(2, appName);
+                    ps.executeUpdate();
+                }
+            }
+            conn.commit();
+        } catch (Exception ex) {
+            if (conn != null) { try { conn.rollback(); } catch (Exception re) { /* ignore */ } }
+            throw new IllegalStateException("Queue delete failed: smtpId=" + smtpId, ex);
+        } finally {
+            if (conn != null) { try { conn.close(); } catch (Exception ce) { /* ignore */ } }
+        }
+    }
+
     // ── WHERE 절 빌더 ────────────────────────────────────────────────────────
 
-    private String buildWhere(String filterTime, String appFilter) {
+    private String buildWhere(String filterTime, String appFilter, String sendFlag, String keyword, String dateFrom, String dateTo) {
         List<String> conditions = new ArrayList<String>();
         if (hasValue(filterTime)) {
             conditions.add("DATE_TRUNC('minute', I.C_TIME) = DATE_TRUNC('minute', CAST(? AS TIMESTAMP))");
@@ -165,13 +225,33 @@ public class PfsEmailQueueService {
         if (hasValue(appFilter)) {
             conditions.add("I.SOURCE_APP = ?");
         }
+        if (hasValue(sendFlag)) {
+            conditions.add("I.S_FLAG = ?");
+        }
+        if (hasValue(keyword)) {
+            conditions.add("(UPPER(I.REF_NO) LIKE UPPER(?) OR UPPER(R.RECEIVER) LIKE UPPER(?))");
+        }
+        if (hasValue(dateFrom)) {
+            conditions.add("I.C_TIME >= CAST(? AS DATE)");
+        }
+        if (hasValue(dateTo)) {
+            conditions.add("I.C_TIME < CAST(? AS DATE) + INTERVAL '1 day'");
+        }
         return conditions.isEmpty() ? "" : "WHERE " + join(" AND ", conditions);
     }
 
-    private void bindParams(PreparedStatement ps, String filterTime, String appFilter) throws Exception {
+    private void bindParams(PreparedStatement ps, String filterTime, String appFilter, String sendFlag, String keyword, String dateFrom, String dateTo) throws Exception {
         int idx = 1;
         if (hasValue(filterTime)) ps.setString(idx++, filterTime);
-        if (hasValue(appFilter))  ps.setString(idx,   appFilter);
+        if (hasValue(appFilter))  ps.setString(idx++, appFilter);
+        if (hasValue(sendFlag))   ps.setString(idx++, sendFlag);
+        if (hasValue(keyword)) {
+            String like = "%" + keyword.trim() + "%";
+            ps.setString(idx++, like);
+            ps.setString(idx++, like);
+        }
+        if (hasValue(dateFrom))   ps.setString(idx++, dateFrom);
+        if (hasValue(dateTo))     ps.setString(idx++, dateTo);
     }
 
     private boolean hasValue(String s) {
@@ -232,6 +312,7 @@ public class PfsEmailQueueService {
         }
     }
 
+    @Retryable(retryFor = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2))
     public List<UploadHistoryRecord> getRecentUploadHistories(int limit) {
         loadDriver();
         int safeLimit = limit <= 0 ? 12 : Math.min(limit, 200);
