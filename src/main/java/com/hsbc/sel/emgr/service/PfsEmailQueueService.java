@@ -304,6 +304,7 @@ public class PfsEmailQueueService {
 
     // ── HTML 파일 조회 ───────────────────────────────────────────────────────
 
+    @Retryable(retryFor = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2))
     public byte[] getHtmlFileBytes(long smtpId, String appName, String name) {
         String sql = "SELECT DATAFILE FROM " + properties.getQueueFilesTable()
             + " WHERE SMTP_ID = ? AND APP_NAME = ? AND NAME = ?";

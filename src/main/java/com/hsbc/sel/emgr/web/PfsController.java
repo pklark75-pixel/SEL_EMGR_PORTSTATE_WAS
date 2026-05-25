@@ -3,7 +3,6 @@ package com.hsbc.sel.emgr.web;
 import com.hsbc.sel.emgr.config.PfsProperties;
 import com.hsbc.sel.emgr.model.BatchValidationResult;
 import com.hsbc.sel.emgr.model.QueuePage;
-import com.hsbc.sel.emgr.model.QueueRecord;
 import com.hsbc.sel.emgr.model.QueueSummary;
 import com.hsbc.sel.emgr.model.UploadHistoryRecord;
 import com.hsbc.sel.emgr.service.PfsBatchService;
