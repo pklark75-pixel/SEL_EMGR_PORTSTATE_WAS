@@ -9,6 +9,7 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.sql.DataSource;
@@ -138,26 +139,6 @@ public class PfsEmailQueueService {
         }
     }
 
-    @Transactional(readOnly = true)
-    @Retryable(retryFor = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2))
-    public int countQueueRecords(String filterTime, String appFilter, String sendFlag, String keyword, String dateFrom, String dateTo) {
-        String where = buildWhere(filterTime, appFilter, sendFlag, keyword, dateFrom, dateTo);
-        String sql = "SELECT COUNT(*) FROM " + properties.getQueueInfoTable() + " I"
-            + " LEFT JOIN " + properties.getQueueRecvTable() + " R"
-            + " ON I.SMTP_ID = R.SMTP_ID AND I.APP_NAME = R.APP_NAME "
-            + where;
-
-        try (Connection conn = openConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            bindParams(ps, filterTime, appFilter, sendFlag, keyword, dateFrom, dateTo);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? rs.getInt(1) : 0;
-            }
-        } catch (Exception ex) {
-            throw new IllegalStateException("Failed to count queue records", ex);
-        }
-    }
-
     // ── 큐 페이지 조회 (count + records 동일 트랜잭션) ───────────────────────
 
     @Transactional(readOnly = true)
@@ -274,6 +255,32 @@ public class PfsEmailQueueService {
             }
         } catch (Exception ex) {
             throw new IllegalStateException("Queue delete failed: smtpId=" + smtpId, ex);
+        } finally {
+            DataSourceUtils.releaseConnection(conn, dataSource);
+        }
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public int deleteQueueRecords(Map<Long, String> targets) {
+        if (targets == null || targets.isEmpty()) return 0;
+        Connection conn = DataSourceUtils.getConnection(dataSource);
+        try {
+            int deleted = 0;
+            for (Map.Entry<Long, String> e : targets.entrySet()) {
+                long smtpId = e.getKey();
+                String appName = e.getValue();
+                for (String tbl : new String[]{properties.getQueueFilesTable(), properties.getQueueRecvTable(), properties.getQueueInfoTable()}) {
+                    try (PreparedStatement ps = conn.prepareStatement("DELETE FROM " + tbl + " WHERE SMTP_ID = ? AND APP_NAME = ?")) {
+                        ps.setLong(1, smtpId);
+                        ps.setString(2, appName);
+                        ps.executeUpdate();
+                    }
+                }
+                deleted++;
+            }
+            return deleted;
+        } catch (Exception ex) {
+            throw new IllegalStateException("Batch queue delete failed", ex);
         } finally {
             DataSourceUtils.releaseConnection(conn, dataSource);
         }

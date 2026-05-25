@@ -23,7 +23,9 @@ import org.slf4j.LoggerFactory;
 
 import java.security.Principal;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 public class PfsController {
@@ -114,17 +116,24 @@ public class PfsController {
             redirect.addFlashAttribute("error", "삭제할 레코드를 선택하세요.");
             return "redirect:/pfs";
         }
-        int deleted = 0;
+        Map<Long, String> targets = new LinkedHashMap<>();
         for (String token : smtpIds) {
             String[] parts = token.split(":", 2);
             if (parts.length == 2) {
                 try {
-                    queueService.deleteQueueRecord(Long.parseLong(parts[0].trim()), parts[1].trim());
-                    deleted++;
-                } catch (Exception ex) {
-                    log.warn("queue delete failed for {}: {}", token, ex.getMessage());
+                    targets.put(Long.parseLong(parts[0].trim()), parts[1].trim());
+                } catch (NumberFormatException ex) {
+                    log.warn("invalid smtpId token: {}", token);
                 }
             }
+        }
+        int deleted = 0;
+        try {
+            deleted = queueService.deleteQueueRecords(targets);
+        } catch (Exception ex) {
+            log.warn("batch queue delete failed: {}", ex.getMessage());
+            redirect.addFlashAttribute("error", "삭제 실패: " + ex.getMessage());
+            return "redirect:/pfs";
         }
         redirect.addFlashAttribute("message", deleted + "건 삭제 완료");
         return "redirect:/pfs";
