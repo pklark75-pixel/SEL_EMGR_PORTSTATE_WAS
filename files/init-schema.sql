@@ -10,9 +10,10 @@ CREATE TABLE IF NOT EXISTS loan.emgr_smtp_files_q (
 );
 
 CREATE TABLE IF NOT EXISTS loan.emgr_smtp_recv_list_q (
-    smtp_id   BIGINT       NOT NULL,
-    app_name  VARCHAR(20)  NOT NULL,
-    receiver  VARCHAR(255) NOT NULL,
+    smtp_id       BIGINT       NOT NULL,
+    app_name      VARCHAR(20)  NOT NULL,
+    receiver      VARCHAR(255) NOT NULL,
+    receiver_name VARCHAR(100),
     PRIMARY KEY (smtp_id, app_name, receiver)
 );
 
@@ -40,8 +41,13 @@ CREATE TABLE IF NOT EXISTS loan.emgr_upload_audit (
     hred_queued    INTEGER       NOT NULL,
     success_flag   CHAR(1)       NOT NULL,
     message        VARCHAR(1000),
+    upload_user    VARCHAR(100),
     PRIMARY KEY (audit_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_emgr_upload_audit_01
     ON loan.emgr_upload_audit (event_time DESC, audit_id DESC);
+
+-- 기존 DB 마이그레이션 (컬럼이 없는 경우에만 실행)
+ALTER TABLE loan.emgr_smtp_recv_list_q  ADD COLUMN IF NOT EXISTS receiver_name VARCHAR(100);
+ALTER TABLE loan.emgr_upload_audit      ADD COLUMN IF NOT EXISTS upload_user   VARCHAR(100);

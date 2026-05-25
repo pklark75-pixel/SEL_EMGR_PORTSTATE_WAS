@@ -20,6 +20,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.security.Principal;
 import java.util.Collections;
 import java.util.List;
 
@@ -92,9 +93,12 @@ public class PfsController {
 
     @PostMapping("/pfs/upload-zip")
     public String uploadZip(@RequestParam(value = "batchZip", required = false) MultipartFile batchZip,
-                            RedirectAttributes redirect) {
+                            RedirectAttributes redirect,
+                            Principal principal) {
+        String uploadUser = principal != null ? principal.getName() : "-";
+
         if (batchZip == null || batchZip.isEmpty()) {
-            saveUploadHistorySafe(false, 0, 0, 0, "ZIP 파일 미탐지");
+            saveUploadHistorySafe(false, 0, 0, 0, "ZIP 파일 미탐지", uploadUser);
             redirect.addFlashAttribute("error", "ZIP 파일을 찾지 못했습니다.");
             return "redirect:/pfs";
         }
@@ -103,13 +107,13 @@ public class PfsController {
         try {
             zipBytes = batchZip.getBytes();
         } catch (Exception ex) {
-            saveUploadHistorySafe(false, 0, 0, 0, "파일 읽기 실패");
+            saveUploadHistorySafe(false, 0, 0, 0, "파일 읽기 실패", uploadUser);
             redirect.addFlashAttribute("error", "파일 읽기 실패: " + ex.getMessage());
             return "redirect:/pfs";
         }
 
         if (zipBytes.length > properties.getUploadZipMaxBytes()) {
-            saveUploadHistorySafe(false, 0, 0, 0, "파일 크기 초과");
+            saveUploadHistorySafe(false, 0, 0, 0, "파일 크기 초과", uploadUser);
             redirect.addFlashAttribute("error", "ZIP 파일 크기가 허용 한도를 초과합니다.");
             return "redirect:/pfs";
         }
@@ -120,14 +124,14 @@ public class PfsController {
 
             BatchValidationResult validation = batchService.validateBatchFiles();
             if (!validation.isValid()) {
-                saveUploadHistorySafe(false, imported, 0, 0, "검증 실패");
+                saveUploadHistorySafe(false, imported, 0, 0, "검증 실패", uploadUser);
                 redirect.addFlashAttribute("error",
                     "ZIP 업로드 후 검증 실패: " + String.join(" | ", validation.getErrors()));
                 return "redirect:/pfs";
             }
 
             QueueSummary queue = queueService.queueEmailsFromGeneratedHtml();
-            saveUploadHistorySafe(true, imported, queue.getHsbcQueuedCount(), queue.getHredQueuedCount(), "성공");
+            saveUploadHistorySafe(true, imported, queue.getHsbcQueuedCount(), queue.getHredQueuedCount(), "성공", uploadUser);
 
             redirect.addFlashAttribute("message",
                 "ZIP 업로드/큐저장 완료. imported=" + imported
@@ -137,7 +141,7 @@ public class PfsController {
                 + ", smtpIdRange=" + queue.getMinSmtpId() + "-" + queue.getMaxSmtpId());
 
         } catch (Exception ex) {
-            saveUploadHistorySafe(false, 0, 0, 0, "실패: " + ex.getMessage());
+            saveUploadHistorySafe(false, 0, 0, 0, "실패: " + ex.getMessage(), uploadUser);
             redirect.addFlashAttribute("error", "ZIP 자동 처리 실패: " + ex.getMessage());
         } finally {
             storageService.clearDirectory(properties.getBatchDirPath());
@@ -158,8 +162,8 @@ public class PfsController {
             .body(bytes);
     }
 
-    private void saveUploadHistorySafe(boolean success, int imported, int hsbc, int hred, String message) {
-        try { queueService.saveUploadHistory(success, imported, hsbc, hred, message); }
+    private void saveUploadHistorySafe(boolean success, int imported, int hsbc, int hred, String message, String uploadUser) {
+        try { queueService.saveUploadHistory(success, imported, hsbc, hred, message, uploadUser); }
         catch (Exception ex) { log.warn("upload history save failed: {}", ex.getMessage()); }
     }
 }

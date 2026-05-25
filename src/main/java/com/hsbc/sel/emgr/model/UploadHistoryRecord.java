@@ -8,6 +8,7 @@ public class UploadHistoryRecord {
     private int hredQueued;
     private boolean success;
     private String message;
+    private String uploadUser;
 
     public String getEventTime() {
         return eventTime;
@@ -55,6 +56,14 @@ public class UploadHistoryRecord {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public String getUploadUser() {
+        return uploadUser;
+    }
+
+    public void setUploadUser(String uploadUser) {
+        this.uploadUser = uploadUser;
     }
 }
 

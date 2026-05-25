@@ -100,7 +100,7 @@ public class PfsEmailQueueService {
         String where = buildWhere(filterTime, appFilter);
         int offset = Math.max(page, 0) * pageSize;
 
-        String sql = "SELECT I.SMTP_ID, I.APP_NAME, I.SOURCE_APP, I.REF_NO, R.RECEIVER, I.S_FLAG, I.C_TIME, I.FUND_COUNT,"
+        String sql = "SELECT I.SMTP_ID, I.APP_NAME, I.SOURCE_APP, I.REF_NO, R.RECEIVER, R.RECEIVER_NAME, I.S_FLAG, I.C_TIME, I.FUND_COUNT,"
             + " COALESCE(OCTET_LENGTH(F.DATAFILE), 0) AS FILE_SIZE"
             + " FROM " + properties.getQueueInfoTable() + " I"
             + " LEFT JOIN " + properties.getQueueRecvTable() + " R"
@@ -123,11 +123,12 @@ public class PfsEmailQueueService {
                     r.setSourceApp(rs.getString(3));
                     r.setRefNo(rs.getString(4));
                     r.setReceiver(rs.getString(5));
-                    r.setSendFlag(rs.getString(6));
-                    Timestamp ts = rs.getTimestamp(7);
+                    r.setReceiverName(rs.getString(6));
+                    r.setSendFlag(rs.getString(7));
+                    Timestamp ts = rs.getTimestamp(8);
                     r.setCreatedTime(ts == null ? "" : ts.toString());
-                    r.setFundCount(rs.getInt(8));
-                    r.setFileSize(rs.getLong(9));
+                    r.setFundCount(rs.getInt(9));
+                    r.setFileSize(rs.getLong(10));
                     rows.add(r);
                 }
             }
@@ -209,12 +210,12 @@ public class PfsEmailQueueService {
 
     // ── 업로드 이력 ──────────────────────────────────────────────────────────
 
-    public void saveUploadHistory(boolean success, int importedCount, int hsbcQueued, int hredQueued, String message) {
+    public void saveUploadHistory(boolean success, int importedCount, int hsbcQueued, int hredQueued, String message, String uploadUser) {
         loadDriver();
 
         String sql = "INSERT INTO " + properties.getUploadAuditTable()
-            + " (AUDIT_ID, EVENT_TIME, IMPORTED_COUNT, HSBC_QUEUED, HRED_QUEUED, SUCCESS_FLAG, MESSAGE)"
-            + " VALUES (?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?)";
+            + " (AUDIT_ID, EVENT_TIME, IMPORTED_COUNT, HSBC_QUEUED, HRED_QUEUED, SUCCESS_FLAG, MESSAGE, UPLOAD_USER)"
+            + " VALUES (?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = openConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -224,6 +225,7 @@ public class PfsEmailQueueService {
             ps.setInt(4, hredQueued);
             ps.setString(5, success ? "Y" : "N");
             ps.setString(6, fit(message, 1000));
+            ps.setString(7, fit(uploadUser, 100));
             ps.executeUpdate();
         } catch (Exception ex) {
             throw new IllegalStateException("Failed to save upload history", ex);
@@ -234,7 +236,7 @@ public class PfsEmailQueueService {
         loadDriver();
         int safeLimit = limit <= 0 ? 12 : Math.min(limit, 200);
 
-        String sql = "SELECT EVENT_TIME, IMPORTED_COUNT, HSBC_QUEUED, HRED_QUEUED, SUCCESS_FLAG, MESSAGE"
+        String sql = "SELECT EVENT_TIME, IMPORTED_COUNT, HSBC_QUEUED, HRED_QUEUED, SUCCESS_FLAG, MESSAGE, UPLOAD_USER"
             + " FROM " + properties.getUploadAuditTable()
             + " ORDER BY EVENT_TIME DESC, AUDIT_ID DESC"
             + " FETCH FIRST " + safeLimit + " ROWS ONLY";
@@ -252,6 +254,7 @@ public class PfsEmailQueueService {
                 r.setHredQueued(rs.getInt(4));
                 r.setSuccess("Y".equalsIgnoreCase(rs.getString(5)));
                 r.setMessage(rs.getString(6));
+                r.setUploadUser(rs.getString(7));
                 rows.add(r);
             }
             return rows;
@@ -279,7 +282,7 @@ public class PfsEmailQueueService {
             BigDecimal smtpId = nextSmtpId();
 
             insertFiles(conn, smtpId, refNo + ".html", htmlBytes, appName);
-            insertRecv(conn, smtpId, email, appName);
+            insertRecv(conn, smtpId, email, customer.getFirstName(), appName);
             insertInfo(conn, smtpId, refNo, content, appName, sourceApp, customer.getStatements().size());
             result.count++;
 
@@ -302,13 +305,14 @@ public class PfsEmailQueueService {
         }
     }
 
-    private void insertRecv(Connection conn, BigDecimal smtpId, String email, String appName) throws Exception {
+    private void insertRecv(Connection conn, BigDecimal smtpId, String email, String name, String appName) throws Exception {
         String sql = "INSERT INTO " + properties.getQueueRecvTable()
-            + " (SMTP_ID, APP_NAME, RECEIVER) VALUES (?, ?, ?)";
+            + " (SMTP_ID, APP_NAME, RECEIVER, RECEIVER_NAME) VALUES (?, ?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setBigDecimal(1, smtpId);
             ps.setString(2, fit(appName, 20));
             ps.setString(3, fit(email, 255));
+            ps.setString(4, fit(name, 100));
             ps.executeUpdate();
         }
     }

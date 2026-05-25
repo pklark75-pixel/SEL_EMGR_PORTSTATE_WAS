@@ -7,6 +7,7 @@ public class QueueRecord {
     private String sourceApp;
     private String refNo;
     private String receiver;
+    private String receiverName;
     private String sendFlag;
     private String createdTime;
     private int fundCount;
@@ -26,6 +27,9 @@ public class QueueRecord {
 
     public String getReceiver() { return receiver; }
     public void setReceiver(String receiver) { this.receiver = receiver; }
+
+    public String getReceiverName() { return receiverName; }
+    public void setReceiverName(String receiverName) { this.receiverName = receiverName; }
 
     public String getSendFlag() { return sendFlag; }
     public void setSendFlag(String sendFlag) { this.sendFlag = sendFlag; }

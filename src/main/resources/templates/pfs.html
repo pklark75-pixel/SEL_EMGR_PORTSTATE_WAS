@@ -338,6 +338,7 @@
                 <thead>
                     <tr>
                         <th>처리 시각</th>
+                        <th>업로더</th>
                         <th>파일 수</th>
                         <th>큐 저장 (HSBC / HRED / 합계)</th>
                         <th>결과</th>
@@ -353,6 +354,7 @@
                                th:classappend="${r.eventTime == filterTime} ? ' active' : ''">
                             </a>
                         </td>
+                        <td class="mono" th:text="${r.uploadUser != null ? r.uploadUser : '-'}"></td>
                         <td th:text="${r.importedCount}"></td>
                         <td th:text="${r.hsbcQueued + ' / ' + r.hredQueued + ' / ' + (r.hsbcQueued + r.hredQueued)}"></td>
                         <td>
@@ -362,7 +364,7 @@
                         <td th:text="${r.message}" style="color:#64748b;"></td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(uploadHistories)}" class="empty-row">
-                        <td colspan="5">업로드 이력이 없습니다.</td>
+                        <td colspan="6">업로드 이력이 없습니다.</td>
                     </tr>
                 </tbody>
             </table>
@@ -434,7 +436,12 @@
                             <span th:if="${r.sourceApp != 'KRHSBC' and r.sourceApp != 'KRHRED'}" class="mono" th:text="${r.sourceApp}"></span>
                         </td>
                         <td class="mono" th:text="${r.refNo}"></td>
-                        <td th:text="${r.receiver}" style="color:#475569;"></td>
+                        <td style="color:#475569;">
+                            <span th:if="${r.receiverName != null and !r.receiverName.trim().isEmpty()}"
+                                  th:text="${r.receiverName}"
+                                  style="font-weight:500; color:#1e293b; margin-right:4px;"></span>
+                            <span th:text="${r.receiver}" class="mono" style="font-size:11px;"></span>
+                        </td>
                         <td>
                             <span th:if="${r.sendFlag == 'Y'}" class="badge badge-sent">발송완료</span>
                             <span th:unless="${r.sendFlag == 'Y'}" class="badge badge-unsent">대기</span>

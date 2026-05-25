@@ -281,8 +281,9 @@ public final class PfsHttpServer {
     }
 
     private void saveUploadHistorySafe(boolean success, int importedCount, int hsbcQueued, int hredQueued, String message) {
+        String sysUser = System.getProperty("user.name", "-");
         try {
-            queueService.saveUploadHistory(success, importedCount, hsbcQueued, hredQueued, message);
+            queueService.saveUploadHistory(success, importedCount, hsbcQueued, hredQueued, message, sysUser);
         } catch (Exception ex) {
             // do not fail upload flow when audit logging fails
             System.out.println("[WARN] upload history save failed: " + ex.getMessage());
