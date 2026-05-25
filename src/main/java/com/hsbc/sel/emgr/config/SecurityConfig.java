@@ -1,5 +1,6 @@
 package com.hsbc.sel.emgr.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -15,6 +16,12 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    @Value("${app.security.username}")
+    private String appUsername;
+
+    @Value("${app.security.password}")
+    private String appPassword;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -41,8 +48,8 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService(PasswordEncoder encoder) {
-        UserDetails user = User.withUsername("pfsadmin")
-            .password(encoder.encode("pfs1234"))
+        UserDetails user = User.withUsername(appUsername)
+            .password(encoder.encode(appPassword))
             .roles("USER")
             .build();
         return new InMemoryUserDetailsManager(user);

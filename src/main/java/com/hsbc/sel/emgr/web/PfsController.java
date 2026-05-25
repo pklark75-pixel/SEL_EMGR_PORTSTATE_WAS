@@ -17,12 +17,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
 
 @Controller
 public class PfsController {
+
+    private static final Logger log = LoggerFactory.getLogger(PfsController.class);
 
     private static final int PAGE_SIZE = 10;
 
@@ -156,6 +160,6 @@ public class PfsController {
 
     private void saveUploadHistorySafe(boolean success, int imported, int hsbc, int hred, String message) {
         try { queueService.saveUploadHistory(success, imported, hsbc, hred, message); }
-        catch (Exception ex) { System.out.println("[WARN] upload history save failed: " + ex.getMessage()); }
+        catch (Exception ex) { log.warn("upload history save failed: {}", ex.getMessage()); }
     }
 }

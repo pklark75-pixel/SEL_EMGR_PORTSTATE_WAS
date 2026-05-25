@@ -50,7 +50,9 @@ public class PfsEmailQueueService {
             throw new IllegalStateException("DB driver loading failed: " + properties.getDbDriverClass(), ex);
         }
 
-        try (Connection conn = DriverManager.getConnection(properties.getDbUrl(), properties.getDbUser(), properties.getEffectiveDbPassword())) {
+        Connection conn = null;
+        try {
+            conn = DriverManager.getConnection(properties.getDbUrl(), properties.getDbUser(), properties.getEffectiveDbPassword());
             conn.setAutoCommit(false);
 
             QueueSummary summary = new QueueSummary();
@@ -58,7 +60,7 @@ public class PfsEmailQueueService {
             List<com.hsbc.sel.emgr.model.Customer> hsbcCustomers = batchService.loadCustomers(validation, false);
             List<com.hsbc.sel.emgr.model.Customer> hredCustomers = batchService.loadCustomers(validation, true);
 
-                QueueInsertResult hsbc = queueForCustomers(conn, hsbcCustomers, false, content);
+            QueueInsertResult hsbc = queueForCustomers(conn, hsbcCustomers, false, content);
             QueueInsertResult hred = queueForCustomers(conn, hredCustomers, true,  content);
 
             summary.setHsbcQueuedCount(hsbc.count);
@@ -79,7 +81,14 @@ public class PfsEmailQueueService {
             return summary;
 
         } catch (Exception ex) {
+            if (conn != null) {
+                try { conn.rollback(); } catch (Exception re) { /* ignore */ }
+            }
             throw new IllegalStateException("Queue insert failed", ex);
+        } finally {
+            if (conn != null) {
+                try { conn.close(); } catch (Exception ce) { /* ignore */ }
+            }
         }
     }
 

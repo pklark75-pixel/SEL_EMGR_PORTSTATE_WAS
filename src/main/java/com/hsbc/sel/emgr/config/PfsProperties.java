@@ -8,8 +8,12 @@ import java.io.InputStream;
 
 import com.hsbc.sel.emgr.security.AesCryptoUtil;
 import com.hsbc.sel.emgr.security.KeyStoreUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PfsProperties {
+
+    private static final Logger log = LoggerFactory.getLogger(PfsProperties.class);
 
     private String baseDir = System.getProperty("user.dir") + "\\files";
     private String batchDirName = "batch";
@@ -235,21 +239,21 @@ public class PfsProperties {
         // 1. 환경변수
         String envKey = System.getenv(dbPasswordKeyEnv);
         if (envKey != null && !envKey.trim().isEmpty()) {
-            System.out.println("[PFS] Key source: environment variable (" + dbPasswordKeyEnv + ")");
+            log.info("Key source: environment variable ({})", dbPasswordKeyEnv);
             return envKey.trim();
         }
 
         // 2. 키 파일
         if (dbPasswordKeyFile != null && !dbPasswordKeyFile.trim().isEmpty()) {
             String fileKey = KeyStoreUtil.readKeyFromFile(dbPasswordKeyFile.trim());
-            System.out.println("[PFS] Key source: key file (" + dbPasswordKeyFile + ")");
+            log.info("Key source: key file ({})", dbPasswordKeyFile);
             return fileKey;
         }
 
         // 3. Windows Credential Manager
         if (dbPasswordKeyWinCred != null && !dbPasswordKeyWinCred.trim().isEmpty()) {
             String credKey = KeyStoreUtil.readKeyFromWindowsCredential(dbPasswordKeyWinCred.trim());
-            System.out.println("[PFS] Key source: Windows Credential Manager (" + dbPasswordKeyWinCred + ")");
+            log.info("Key source: Windows Credential Manager ({})", dbPasswordKeyWinCred);
             return credKey;
         }
 

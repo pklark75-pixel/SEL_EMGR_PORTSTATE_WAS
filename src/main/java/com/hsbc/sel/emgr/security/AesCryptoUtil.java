@@ -14,6 +14,7 @@ public final class AesCryptoUtil {
 
     private static final String TRANSFORMATION = "AES/CBC/PKCS5Padding";
     private static final int IV_LENGTH = 16;
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private AesCryptoUtil() {
     }
@@ -22,7 +23,7 @@ public final class AesCryptoUtil {
         try {
             byte[] key = deriveKey(keyMaterial);
             byte[] iv = new byte[IV_LENGTH];
-            new SecureRandom().nextBytes(iv);
+            SECURE_RANDOM.nextBytes(iv);
 
             Cipher cipher = Cipher.getInstance(TRANSFORMATION);
             cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, "AES"), new IvParameterSpec(iv));

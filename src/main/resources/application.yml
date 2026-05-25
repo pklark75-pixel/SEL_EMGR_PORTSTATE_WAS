@@ -1,6 +1,11 @@
 server:
   port: 8080
 
+app:
+  security:
+    username: ${PFS_APP_USER:pfsadmin}
+    password: ${PFS_APP_PASSWORD:pfs1234}
+
 spring:
   autoconfigure:
     exclude:

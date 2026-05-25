@@ -11,11 +11,16 @@ import java.nio.file.attribute.AclEntry;
 import java.nio.file.attribute.AclEntryType;
 import java.nio.file.attribute.AclFileAttributeView;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class KeyStoreUtil {
 
+    private static final Logger log = LoggerFactory.getLogger(KeyStoreUtil.class);
+
     // Windows Credential Manager target name
     private static final String WIN_TARGET_PREFIX = "PFS_EMGR_";
+    private static final java.util.regex.Pattern SAFE_CRED_NAME = java.util.regex.Pattern.compile("^[A-Za-z0-9_\\-]{1,64}$");
 
     private KeyStoreUtil() {
     }
@@ -49,7 +54,7 @@ public final class KeyStoreUtil {
         try {
             Files.write(path, key.getBytes(StandardCharsets.UTF_8));
             restrictToOwnerWindows(path);
-            System.out.println("Key file written: " + path.toAbsolutePath());
+            log.info("Key file written: {}", path.toAbsolutePath());
         } catch (Exception ex) {
             throw new IllegalStateException("Failed to write key file: " + keyFilePath, ex);
         }
@@ -73,7 +78,7 @@ public final class KeyStoreUtil {
             }
             aclView.setAcl(acl);
         } catch (Exception ex) {
-            System.out.println("Warning: Could not restrict key file permissions: " + ex.getMessage());
+            log.warn("Could not restrict key file permissions: {}", ex.getMessage());
         }
     }
 
@@ -83,6 +88,9 @@ public final class KeyStoreUtil {
      * 내부적으로 cmdkey를 사용해 자격증명을 읽는다.
      */
     public static String readKeyFromWindowsCredential(String credentialName) {
+        if (!SAFE_CRED_NAME.matcher(credentialName).matches()) {
+            throw new IllegalArgumentException("Invalid credential name (alphanumeric/underscore/hyphen only): " + credentialName);
+        }
         String target = WIN_TARGET_PREFIX + credentialName;
         try {
             // PowerShell을 통해 자격증명 읽기
@@ -114,6 +122,9 @@ public final class KeyStoreUtil {
      * cmdkey /add 사용 — 한 번만 실행하면 됨.
      */
     public static void saveKeyToWindowsCredential(String credentialName, String key) {
+        if (!SAFE_CRED_NAME.matcher(credentialName).matches()) {
+            throw new IllegalArgumentException("Invalid credential name (alphanumeric/underscore/hyphen only): " + credentialName);
+        }
         String target = WIN_TARGET_PREFIX + credentialName;
         try {
             ProcessBuilder pb = new ProcessBuilder(
@@ -127,13 +138,13 @@ public final class KeyStoreUtil {
             BufferedReader reader = new BufferedReader(new InputStreamReader(proc.getInputStream(), StandardCharsets.UTF_8));
             String line;
             while ((line = reader.readLine()) != null) {
-                System.out.println(line);
+                log.info("{}", line);
             }
             int exit = proc.waitFor();
             if (exit != 0) {
                 throw new IllegalStateException("cmdkey failed with exit code: " + exit);
             }
-            System.out.println("Saved to Windows Credential Manager: " + target);
+            log.info("Saved to Windows Credential Manager: {}", target);
         } catch (Exception ex) {
             throw new IllegalStateException("Failed to save Windows Credential: " + target, ex);
         }
