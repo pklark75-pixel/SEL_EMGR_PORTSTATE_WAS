@@ -8,7 +8,6 @@ public class Customer {
     private String custNo;
     private String emailAddr;
     private String firstName;
-    private String htmlContent;
     private final List<PortfolioStatement> statements = new ArrayList<PortfolioStatement>();
 
     public Customer(String custNo, String emailAddr, String firstName) {
@@ -25,7 +24,6 @@ public class Customer {
     public String getEmailAddr() { return emailAddr; }
     public String getFirstName() { return firstName; }
     public List<PortfolioStatement> getStatements() { return statements; }
-    public String getHtmlContent() { return htmlContent; }
-    public void setHtmlContent(String htmlContent) { this.htmlContent = htmlContent; }
+
 }
 
