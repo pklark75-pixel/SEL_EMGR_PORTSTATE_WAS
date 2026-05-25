@@ -14,6 +14,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.sql.DataSource;
 
 import com.hsbc.sel.emgr.config.PfsProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.hsbc.sel.emgr.model.BatchValidationResult;
 import com.hsbc.sel.emgr.model.DashboardStats;
 import com.hsbc.sel.emgr.model.QueueRecord;
@@ -25,6 +27,8 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.transaction.annotation.Transactional;
 
 public class PfsEmailQueueService {
+
+    private static final Logger log = LoggerFactory.getLogger(PfsEmailQueueService.class);
 
     private final PfsProperties properties;
     private final PfsBatchService batchService;
@@ -89,6 +93,7 @@ public class PfsEmailQueueService {
 
     // ── 큐 레코드 조회 (페이징 + 필터 통합) ─────────────────────────────────
 
+    @Transactional(readOnly = true)
     @Retryable(retryFor = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2))
     public List<QueueRecord> getQueueRecords(String filterTime, String appFilter, String sendFlag, String keyword, String dateFrom, String dateTo, int page, int pageSize) {
         String where = buildWhere(filterTime, appFilter, sendFlag, keyword, dateFrom, dateTo);
@@ -132,6 +137,7 @@ public class PfsEmailQueueService {
         }
     }
 
+    @Transactional(readOnly = true)
     @Retryable(retryFor = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2))
     public int countQueueRecords(String filterTime, String appFilter, String sendFlag, String keyword, String dateFrom, String dateTo) {
         String where = buildWhere(filterTime, appFilter, sendFlag, keyword, dateFrom, dateTo);
@@ -153,6 +159,7 @@ public class PfsEmailQueueService {
 
     // ── 대시보드 통계 ─────────────────────────────────────────────────────────
 
+    @Transactional(readOnly = true)
     @Retryable(retryFor = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2))
     public DashboardStats getSummaryStats() {
         DashboardStats stats = new DashboardStats();
@@ -174,7 +181,7 @@ public class PfsEmailQueueService {
                  ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) stats.setTodayUploadCount(rs.getInt(1));
             }
-        } catch (Exception ex) { /* DB 오류 시 0으로 반환 */ }
+        } catch (Exception ex) { log.warn("getSummaryStats DB error: {}", ex.getMessage()); }
         return stats;
     }
 
@@ -293,6 +300,7 @@ public class PfsEmailQueueService {
         }
     }
 
+    @Transactional(readOnly = true)
     @Retryable(retryFor = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2))
     public List<UploadHistoryRecord> getRecentUploadHistories(int limit) {
         int safeLimit = limit <= 0 ? 12 : Math.min(limit, 200);
