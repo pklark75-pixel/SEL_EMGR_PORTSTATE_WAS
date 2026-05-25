@@ -110,9 +110,29 @@ mail.sender=HSBC Korea <info@kr.hsbc.com>
 mail.title=Portfolio Statement Upload Notification
 ```
 
+### DB 비밀번호 암호화 (선택)
+
+`db.password` 대신 AES-256 암호화된 값을 사용할 수 있습니다.
+
+```properties
+# db.password 대신 암호화된 값 지정
+db.password.enc=<AES 암호화된 Base64 문자열>
+
+# 복호화 키 소스 (우선순위 순, 하나만 설정)
+db.password.keyEnv=PFS_DB_KEY          # 환경변수 (기본)
+db.password.keyFile=files/pfs-db.key   # 키 파일
+db.password.keyWinCred=DB_KEY          # Windows Credential Manager
+```
+
+```powershell
+# 암호화된 비밀번호 생성 (키는 환경변수 PFS_DB_KEY 또는 직접 입력)
+mvn exec:java -Dexec.mainClass=com.hsbc.sel.emgr.jdk.PfsPasswordCryptoTool `
+    -Dexec.args="encrypt <평문비밀번호>"
+```
+
 ## 보안 (Spring Security)
 
-폼 기반 로그인이 적용되어 있습니다. 기본 계정은 `SecurityConfig.java`에서 관리합니다.
+폼 기반 로그인이 적용되어 있습니다.
 
 | 항목 | 기본값 |
 |---|---|
@@ -122,7 +142,32 @@ mail.title=Portfolio Statement Upload Notification
 | 로그아웃 URL | `/pfs/logout` (POST) |
 | 인증 제외 | `/actuator/health`, `/actuator/info` |
 
-> 운영 환경에서는 `SecurityConfig.java`의 `userDetailsService()` 메서드에서 계정 정보를 변경하거나 DB 기반 인증으로 교체하세요.
+### 계정 설정
+
+계정 정보는 `application.yml`에서 관리하며 **환경변수로 오버라이드** 가능합니다.
+
+```yaml
+# application.yml (기본값)
+app:
+  security:
+    username: ${PFS_APP_USER:pfsadmin}
+    password: ${PFS_APP_PASSWORD:pfs1234}
+```
+
+| 환경변수 | 설명 | 기본값 |
+|---|---|---|
+| `PFS_APP_USER` | 로그인 계정명 | `pfsadmin` |
+| `PFS_APP_PASSWORD` | 로그인 비밀번호 (평문) | `pfs1234` |
+
+**WLP 배포 시 환경변수 적용 예:**
+
+```
+# jvm.options 또는 서버 시작 전 환경변수 설정
+-DPFS_APP_USER=운영계정
+-DPFS_APP_PASSWORD=운영비밀번호
+```
+
+> 운영 환경에서는 반드시 환경변수로 기본값을 교체하거나, `SecurityConfig.java`의 `userDetailsService()`를 DB 기반 인증으로 전환하세요.
 
 ## WLP (WebSphere Liberty Profile) 배포
 
@@ -273,7 +318,9 @@ ZIP 업로드 (POST /pfs/upload-zip)
 # DB 연결 테스트
 mvn exec:java -Dexec.mainClass=com.hsbc.sel.emgr.jdk.PfsDbConnectionTest
 
-# 비밀번호 암호화
+# DB 비밀번호 AES 암호화 / 복호화
 mvn exec:java -Dexec.mainClass=com.hsbc.sel.emgr.jdk.PfsPasswordCryptoTool `
     -Dexec.args="encrypt <평문>"
+mvn exec:java -Dexec.mainClass=com.hsbc.sel.emgr.jdk.PfsPasswordCryptoTool `
+    -Dexec.args="decrypt <암호화된값>"
 ```
