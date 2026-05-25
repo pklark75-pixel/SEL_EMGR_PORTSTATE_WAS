@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.hsbc.sel.emgr.model.BatchValidationResult;
 import com.hsbc.sel.emgr.model.DashboardStats;
+import com.hsbc.sel.emgr.model.QueuePage;
 import com.hsbc.sel.emgr.model.QueueRecord;
 import com.hsbc.sel.emgr.model.QueueSummary;
 import com.hsbc.sel.emgr.model.UploadHistoryRecord;
@@ -157,6 +158,79 @@ public class PfsEmailQueueService {
         }
     }
 
+    // ── 큐 페이지 조회 (count + records 동일 트랜잭션) ───────────────────────
+
+    @Transactional(readOnly = true)
+    @Retryable(retryFor = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2))
+    public QueuePage getQueuePage(String filterTime, String appFilter, String sendFlag,
+                                  String keyword, String dateFrom, String dateTo,
+                                  int page, int pageSize) {
+        String where = buildWhere(filterTime, appFilter, sendFlag, keyword, dateFrom, dateTo);
+
+        String countSql = "SELECT COUNT(*) FROM " + properties.getQueueInfoTable() + " I"
+            + " LEFT JOIN " + properties.getQueueRecvTable() + " R"
+            + " ON I.SMTP_ID = R.SMTP_ID AND I.APP_NAME = R.APP_NAME "
+            + where;
+
+        String recordSql = "SELECT I.SMTP_ID, I.APP_NAME, I.SOURCE_APP, I.REF_NO, R.RECEIVER, R.RECEIVER_NAME, I.S_FLAG, I.C_TIME, I.FUND_COUNT,"
+            + " COALESCE(OCTET_LENGTH(F.DATAFILE), 0) AS FILE_SIZE"
+            + " FROM " + properties.getQueueInfoTable() + " I"
+            + " LEFT JOIN " + properties.getQueueRecvTable() + " R"
+            + " ON I.SMTP_ID = R.SMTP_ID AND I.APP_NAME = R.APP_NAME"
+            + " LEFT JOIN " + properties.getQueueFilesTable() + " F"
+            + " ON I.SMTP_ID = F.SMTP_ID AND I.APP_NAME = F.APP_NAME"
+            + " " + where
+            + " ORDER BY I.C_TIME DESC, I.SMTP_ID DESC"
+            + " OFFSET ? ROWS FETCH FIRST ? ROWS ONLY";
+
+        Connection conn = DataSourceUtils.getConnection(dataSource);
+        try {
+            int totalCount;
+            try (PreparedStatement ps = conn.prepareStatement(countSql)) {
+                bindParams(ps, filterTime, appFilter, sendFlag, keyword, dateFrom, dateTo);
+                try (ResultSet rs = ps.executeQuery()) {
+                    totalCount = rs.next() ? rs.getInt(1) : 0;
+                }
+            }
+
+            int totalPages = totalCount == 0 ? 1 : (totalCount + pageSize - 1) / pageSize;
+            int safePage   = Math.min(Math.max(page, 0), totalPages - 1);
+            int offset     = safePage * pageSize;
+
+            List<QueueRecord> rows = new ArrayList<>();
+            try (PreparedStatement ps = conn.prepareStatement(recordSql)) {
+                bindParams(ps, filterTime, appFilter, sendFlag, keyword, dateFrom, dateTo);
+                int idx = countBindParams(filterTime, appFilter, sendFlag, keyword, dateFrom, dateTo) + 1;
+                ps.setInt(idx,     offset);
+                ps.setInt(idx + 1, pageSize);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        QueueRecord r = new QueueRecord();
+                        r.setSmtpId(rs.getLong(1));
+                        r.setAppName(rs.getString(2));
+                        r.setSourceApp(rs.getString(3));
+                        r.setRefNo(rs.getString(4));
+                        r.setReceiver(rs.getString(5));
+                        r.setReceiverName(rs.getString(6));
+                        r.setSendFlag(rs.getString(7));
+                        Timestamp ts = rs.getTimestamp(8);
+                        r.setCreatedTime(ts == null ? "" : ts.toString());
+                        r.setFundCount(rs.getInt(9));
+                        r.setFileSize(rs.getLong(10));
+                        rows.add(r);
+                    }
+                }
+            }
+
+            return new QueuePage(rows, totalCount, totalPages, safePage);
+
+        } catch (Exception ex) {
+            throw new IllegalStateException("Failed to read queue page", ex);
+        } finally {
+            DataSourceUtils.releaseConnection(conn, dataSource);
+        }
+    }
+
     // ── 대시보드 통계 ─────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
@@ -242,6 +316,17 @@ public class PfsEmailQueueService {
         }
         if (hasValue(dateFrom))   ps.setString(idx++, dateFrom);
         if (hasValue(dateTo))     ps.setString(idx++, dateTo);
+    }
+
+    private int countBindParams(String filterTime, String appFilter, String sendFlag, String keyword, String dateFrom, String dateTo) {
+        int count = 0;
+        if (hasValue(filterTime)) count++;
+        if (hasValue(appFilter))  count++;
+        if (hasValue(sendFlag))   count++;
+        if (hasValue(keyword))    count += 2;
+        if (hasValue(dateFrom))   count++;
+        if (hasValue(dateTo))     count++;
+        return count;
     }
 
     private boolean hasValue(String s) {

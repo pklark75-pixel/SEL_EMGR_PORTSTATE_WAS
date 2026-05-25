@@ -2,6 +2,7 @@ package com.hsbc.sel.emgr.web;
 
 import com.hsbc.sel.emgr.config.PfsProperties;
 import com.hsbc.sel.emgr.model.BatchValidationResult;
+import com.hsbc.sel.emgr.model.QueuePage;
 import com.hsbc.sel.emgr.model.QueueRecord;
 import com.hsbc.sel.emgr.model.QueueSummary;
 import com.hsbc.sel.emgr.model.UploadHistoryRecord;
@@ -88,19 +89,16 @@ public class PfsController {
         }
 
         try {
-            int totalCount = queueService.countQueueRecords(filterTime, appFilter, sendFlag, keyword, dateFrom, dateTo);
-            int totalPages = totalCount == 0 ? 1 : (totalCount + safePageSize - 1) / safePageSize;
-            int safePage   = Math.min(Math.max(page, 0), totalPages - 1);
-
-            List<QueueRecord> records = queueService.getQueueRecords(filterTime, appFilter, sendFlag, keyword, dateFrom, dateTo, safePage, safePageSize);
-            model.addAttribute("queueRecords", records);
-            model.addAttribute("totalCount",   totalCount);
-            model.addAttribute("totalPages",   totalPages);
-            model.addAttribute("page",         safePage);
+            QueuePage queuePage = queueService.getQueuePage(filterTime, appFilter, sendFlag, keyword, dateFrom, dateTo, page, safePageSize);
+            model.addAttribute("queueRecords", queuePage.getRecords());
+            model.addAttribute("totalCount",   queuePage.getTotalCount());
+            model.addAttribute("totalPages",   queuePage.getTotalPages());
+            model.addAttribute("page",         queuePage.getPage());
         } catch (Exception ex) {
             model.addAttribute("queueRecords", Collections.emptyList());
             model.addAttribute("totalCount", 0);
             model.addAttribute("totalPages", 1);
+            model.addAttribute("page", 0);
             if (!model.containsAttribute("dbError")) {
                 model.addAttribute("dbError", "DB 연결 실패 (큐 조회): " + ex.getMessage());
             }
