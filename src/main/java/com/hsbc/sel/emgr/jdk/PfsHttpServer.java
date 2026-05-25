@@ -21,8 +21,12 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class PfsHttpServer {
+
+    private static final Logger log = LoggerFactory.getLogger(PfsHttpServer.class);
 
     private final PfsProperties properties;
     private final PfsStorageService storageService;
@@ -110,6 +114,11 @@ public final class PfsHttpServer {
 
         if (smtpIdStr == null || appName == null || name == null) {
             sendText(exchange, 400, "Required: id, app, name");
+            return;
+        }
+
+        if (!name.endsWith(".html") || name.contains("/") || name.contains("\\") || name.contains("..")) {
+            sendText(exchange, 400, "Invalid name parameter");
             return;
         }
 
@@ -295,8 +304,7 @@ public final class PfsHttpServer {
         try {
             queueService.saveUploadHistory(success, importedCount, hsbcQueued, hredQueued, message, sysUser);
         } catch (Exception ex) {
-            // do not fail upload flow when audit logging fails
-            System.out.println("[WARN] upload history save failed: " + ex.getMessage());
+            log.warn("upload history save failed: {}", ex.getMessage());
         }
     }
 

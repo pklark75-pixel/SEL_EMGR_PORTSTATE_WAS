@@ -405,7 +405,7 @@
 <header class="app-header">
     <div class="logo">PF</div>
     <h1>PFS Console</h1>
-    <span class="env-badge">DEV</span>
+    <span class="env-badge" th:text="${appEnv}">DEV</span>
     <div class="user-info">
         <a th:href="@{/docs/user_manual.html}" target="_blank" class="btn-manual">📖 매뉴얼</a>
         <span sec:authentication="name"></span>

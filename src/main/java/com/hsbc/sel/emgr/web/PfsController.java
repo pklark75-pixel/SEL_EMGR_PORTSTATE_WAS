@@ -9,6 +9,7 @@ import com.hsbc.sel.emgr.model.UploadHistoryRecord;
 import com.hsbc.sel.emgr.service.PfsBatchService;
 import com.hsbc.sel.emgr.service.PfsEmailQueueService;
 import com.hsbc.sel.emgr.service.PfsStorageService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -33,6 +34,9 @@ public class PfsController {
     private static final Logger log = LoggerFactory.getLogger(PfsController.class);
 
     private static final int[] VALID_PAGE_SIZES = {10, 20, 50, 100};
+
+    @Value("${app.env:DEV}")
+    private String appEnv;
 
     private final PfsProperties properties;
     private final PfsStorageService storageService;
@@ -66,6 +70,7 @@ public class PfsController {
         int safePageSize = 10;
         for (int v : VALID_PAGE_SIZES) { if (pageSize == v) { safePageSize = v; break; } }
 
+        model.addAttribute("appEnv",           appEnv);
         model.addAttribute("uploadHistoryRows", properties.getUploadHistoryRows());
         model.addAttribute("filterTime", filterTime);
         model.addAttribute("appFilter",  appFilter);

@@ -7,6 +7,7 @@ app:
   security:
     username: ${PFS_APP_USER:pfsadmin}
     password: ${PFS_APP_PASSWORD:pfs1234}
+  env: ${PFS_APP_ENV:DEV}
 
 spring:
   autoconfigure:
