@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.7.18</version>
+        <version>3.5.3</version>
         <relativePath/>
     </parent>
 
@@ -19,7 +19,7 @@
     <description>PFS portfolio statement batch processor - WAS/WLP WAR deployment</description>
 
     <properties>
-        <java.version>1.8</java.version>
+        <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -48,7 +48,36 @@
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
 
-        <!-- PostgreSQL 드라이버는 WAR 내부에 포함 (WAS 공유 라이브러리 미설정 시) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!-- Spring Security 6 Thymeleaf 통합 -->
+        <dependency>
+            <groupId>org.thymeleaf.extras</groupId>
+            <artifactId>thymeleaf-extras-springsecurity6</artifactId>
+        </dependency>
+
+        <!-- 운영 모니터링: /actuator/health 등 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- Spring JDBC: raw JDBC 대체, 커넥션 누수 방지 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
+
+        <!-- Bean Validation: 입력값 검증 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- PostgreSQL 드라이버는 WAR 내부에 포함 -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
@@ -63,26 +92,20 @@
     </dependencies>
 
     <build>
-        <!-- WAR 파일명: portstate-was-1.0.0-SNAPSHOT.war -->
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
 
-            <!--
-                Open Liberty (WLP) 로컬 테스트용
-                mvn liberty:run  → Liberty 자동 다운로드 후 서버 기동
-                mvn liberty:stop → 서버 중지
-            -->
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
                 <version>3.10.3</version>
                 <configuration>
+                    <installDirectory>C:/SELPRG/wlp</installDirectory>
                     <serverName>pfsServer</serverName>
                     <configFile>${project.basedir}/src/main/liberty/config/server.xml</configFile>
-                    <!-- pfs-jdk.properties 위치를 JVM 옵션으로 전달 -->
                     <jvmOptions>
                         <param>-Dpfs.baseDir=${project.basedir}/files</param>
                     </jvmOptions>
