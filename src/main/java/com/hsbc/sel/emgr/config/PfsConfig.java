@@ -4,6 +4,8 @@ import com.hsbc.sel.emgr.service.PfsBatchService;
 import com.hsbc.sel.emgr.service.PfsEmailQueueService;
 import com.hsbc.sel.emgr.service.PfsStorageService;
 import com.hsbc.sel.emgr.service.PfsTemplateService;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -13,6 +15,23 @@ public class PfsConfig {
     @Bean
     public PfsProperties pfsProperties() {
         return PfsProperties.loadDefault();
+    }
+
+    @Bean(destroyMethod = "close")
+    public HikariDataSource pfsDataSource(PfsProperties properties) {
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(properties.getDbUrl());
+        config.setDriverClassName(properties.getDbDriverClass());
+        config.setUsername(properties.getDbUser());
+        config.setPassword(properties.getEffectiveDbPassword());
+        config.setMaximumPoolSize(5);
+        config.setMinimumIdle(1);
+        config.setConnectionTimeout(30_000);
+        config.setIdleTimeout(600_000);
+        config.setMaxLifetime(1_800_000);
+        config.setInitializationFailTimeout(-1);
+        config.setPoolName("pfs-hikari");
+        return new HikariDataSource(config);
     }
 
     @Bean
@@ -31,7 +50,8 @@ public class PfsConfig {
     }
 
     @Bean
-    public PfsEmailQueueService pfsEmailQueueService(PfsProperties properties, PfsBatchService batchService, PfsTemplateService templateService) {
-        return new PfsEmailQueueService(properties, batchService, templateService);
+    public PfsEmailQueueService pfsEmailQueueService(PfsProperties properties, PfsBatchService batchService,
+                                                     PfsTemplateService templateService, HikariDataSource dataSource) {
+        return new PfsEmailQueueService(properties, batchService, templateService, dataSource);
     }
 }

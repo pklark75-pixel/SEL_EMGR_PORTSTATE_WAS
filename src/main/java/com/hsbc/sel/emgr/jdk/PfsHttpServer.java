@@ -19,6 +19,8 @@ import com.hsbc.sel.emgr.service.PfsTemplateService;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 
 public final class PfsHttpServer {
 
@@ -39,7 +41,15 @@ public final class PfsHttpServer {
         PfsStorageService storageService = new PfsStorageService(properties);
         PfsTemplateService templateService = new PfsTemplateService(properties);
         PfsBatchService batchService = new PfsBatchService(properties, storageService, templateService);
-        PfsEmailQueueService queueService = new PfsEmailQueueService(properties, batchService, templateService);
+        HikariConfig hikariConfig = new HikariConfig();
+        hikariConfig.setJdbcUrl(properties.getDbUrl());
+        hikariConfig.setDriverClassName(properties.getDbDriverClass());
+        hikariConfig.setUsername(properties.getDbUser());
+        hikariConfig.setPassword(properties.getEffectiveDbPassword());
+        hikariConfig.setMaximumPoolSize(2);
+        hikariConfig.setPoolName("pfs-http");
+        HikariDataSource dataSource = new HikariDataSource(hikariConfig);
+        PfsEmailQueueService queueService = new PfsEmailQueueService(properties, batchService, templateService, dataSource);
 
         PfsHttpServer app = new PfsHttpServer(properties, storageService, batchService, queueService);
 

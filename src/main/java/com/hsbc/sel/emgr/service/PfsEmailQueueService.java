@@ -3,7 +3,6 @@ package com.hsbc.sel.emgr.service;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
@@ -11,6 +10,8 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.sql.DataSource;
 
 import com.hsbc.sel.emgr.config.PfsProperties;
 import com.hsbc.sel.emgr.model.BatchValidationResult;
@@ -26,13 +27,16 @@ public class PfsEmailQueueService {
     private final PfsProperties properties;
     private final PfsBatchService batchService;
     private final PfsTemplateService templateService;
+    private final DataSource dataSource;
     private final AtomicInteger idSequence = new AtomicInteger(0);
     private final AtomicInteger auditSequence = new AtomicInteger(0);
 
-    public PfsEmailQueueService(PfsProperties properties, PfsBatchService batchService, PfsTemplateService templateService) {
+    public PfsEmailQueueService(PfsProperties properties, PfsBatchService batchService,
+                                PfsTemplateService templateService, DataSource dataSource) {
         this.properties = properties;
         this.batchService = batchService;
         this.templateService = templateService;
+        this.dataSource = dataSource;
     }
 
     public QueueSummary queueEmailsFromGeneratedHtml() {
@@ -47,15 +51,9 @@ public class PfsEmailQueueService {
 
         String content = templateService.readEmailContentTemplate();
 
-        try {
-            Class.forName(properties.getDbDriverClass());
-        } catch (Exception ex) {
-            throw new IllegalStateException("DB driver loading failed: " + properties.getDbDriverClass(), ex);
-        }
-
         Connection conn = null;
         try {
-            conn = DriverManager.getConnection(properties.getDbUrl(), properties.getDbUser(), properties.getEffectiveDbPassword());
+            conn = dataSource.getConnection();
             conn.setAutoCommit(false);
 
             QueueSummary summary = new QueueSummary();
@@ -99,8 +97,6 @@ public class PfsEmailQueueService {
 
     @Retryable(retryFor = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2))
     public List<QueueRecord> getQueueRecords(String filterTime, String appFilter, String sendFlag, String keyword, String dateFrom, String dateTo, int page, int pageSize) {
-        loadDriver();
-
         String where = buildWhere(filterTime, appFilter, sendFlag, keyword, dateFrom, dateTo);
         int offset = Math.max(page, 0) * pageSize;
 
@@ -144,8 +140,6 @@ public class PfsEmailQueueService {
 
     @Retryable(retryFor = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2))
     public int countQueueRecords(String filterTime, String appFilter, String sendFlag, String keyword, String dateFrom, String dateTo) {
-        loadDriver();
-
         String where = buildWhere(filterTime, appFilter, sendFlag, keyword, dateFrom, dateTo);
         String sql = "SELECT COUNT(*) FROM " + properties.getQueueInfoTable() + " I"
             + " LEFT JOIN " + properties.getQueueRecvTable() + " R"
@@ -167,7 +161,6 @@ public class PfsEmailQueueService {
 
     @Retryable(retryFor = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2))
     public DashboardStats getSummaryStats() {
-        loadDriver();
         DashboardStats stats = new DashboardStats();
         String qSql = "SELECT COUNT(*) FILTER (WHERE S_FLAG = 'N') AS p,"
             + " COUNT(*) FILTER (WHERE S_FLAG = 'Y') AS s, COUNT(*) AS t"
@@ -194,7 +187,6 @@ public class PfsEmailQueueService {
     // ── 큐 레코드 삭제 ───────────────────────────────────────────────────────
 
     public void deleteQueueRecord(long smtpId, String appName) {
-        loadDriver();
         Connection conn = null;
         try {
             conn = openConnection();
@@ -291,8 +283,6 @@ public class PfsEmailQueueService {
     // ── 업로드 이력 ──────────────────────────────────────────────────────────
 
     public void saveUploadHistory(boolean success, int importedCount, int hsbcQueued, int hredQueued, String message, String uploadUser) {
-        loadDriver();
-
         String sql = "INSERT INTO " + properties.getUploadAuditTable()
             + " (AUDIT_ID, EVENT_TIME, IMPORTED_COUNT, HSBC_QUEUED, HRED_QUEUED, SUCCESS_FLAG, MESSAGE, UPLOAD_USER)"
             + " VALUES (?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?, ?)";
@@ -314,7 +304,6 @@ public class PfsEmailQueueService {
 
     @Retryable(retryFor = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2))
     public List<UploadHistoryRecord> getRecentUploadHistories(int limit) {
-        loadDriver();
         int safeLimit = limit <= 0 ? 12 : Math.min(limit, 200);
 
         String sql = "SELECT EVENT_TIME, IMPORTED_COUNT, HSBC_QUEUED, HRED_QUEUED, SUCCESS_FLAG, MESSAGE, UPLOAD_USER"
@@ -417,13 +406,8 @@ public class PfsEmailQueueService {
 
     // ── 공통 유틸 ────────────────────────────────────────────────────────────
 
-    private void loadDriver() {
-        try { Class.forName(properties.getDbDriverClass()); }
-        catch (Exception ex) { throw new IllegalStateException("DB driver loading failed: " + properties.getDbDriverClass(), ex); }
-    }
-
     private Connection openConnection() throws Exception {
-        return DriverManager.getConnection(properties.getDbUrl(), properties.getDbUser(), properties.getEffectiveDbPassword());
+        return dataSource.getConnection();
     }
 
     private String fit(String value, int maxLen) {
