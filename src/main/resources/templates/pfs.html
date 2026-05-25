@@ -638,7 +638,9 @@
                                 <button th:if="${r.refNo != null and !r.refNo.trim().isEmpty()}"
                                         type="button"
                                         class="preview-link"
-                                        th:onclick="'openPreview(\'' + @{/pfs/html-file(id=${r.smtpId}, app=${r.appName}, name=${r.refNo.trim() + '.html'})} + '\',\'' + ${r.refNo} + '.html\'')"
+                                        th:data-url="@{/pfs/html-file(id=${r.smtpId},app=${r.appName},name=${r.refNo.trim() + '.html'})}"
+                                        th:data-title="${r.refNo.trim() + '.html'}"
+                                        onclick="openPreview(this.dataset.url, this.dataset.title)"
                                         >미리보기</button>
                             </td>
                         </tr>
